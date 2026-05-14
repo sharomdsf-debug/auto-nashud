@@ -4,12 +4,14 @@ import os
 API_KEY = os.getenv("FIRECRAWL_API")
 
 banks = [
-    "https://google.com",
-    "https://example.com"
+    "https://dc.tj/",
+    "https://www.tawhidbank.tj/personal",
+    "https://eskhata.com/"
 ]
 
 for url in banks:
 
+    print("\n====================")
     print("Checking:", url)
 
     response = requests.post(
@@ -26,4 +28,7 @@ for url in banks:
 
     data = response.json()
 
-    print(data)
+    if "data" in data:
+        print(data["data"]["markdown"][:5000])
+    else:
+        print(data)
