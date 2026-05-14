@@ -27,7 +27,14 @@ for url in banks:
 
     data = response.json()
 
-    if "data" in data:
-        print(data["data"]["markdown"][:5000])
+    if "data" in data and "markdown" in data["data"]:
+
+        print("\n========== WEBSITE TEXT ==========\n")
+
+        print(data["data"]["markdown"])
+
+        print("\n========== END ==========\n")
+
     else:
+        print("ERROR:")
         print(data)
