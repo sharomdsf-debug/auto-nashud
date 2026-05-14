@@ -4,9 +4,9 @@ import os
 API_KEY = os.getenv("FIRECRAWL_API")
 
 banks = [
-    "https://dc.tj/",
-    "https://www.tawhidbank.tj/personal",
-    "https://eskhata.com/"
+
+    "https://www.tawhidbank.tj/"
+ 
 ]
 
 for url in banks:
