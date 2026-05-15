@@ -1,7 +1,9 @@
 import requests
 import os
+import json
 
-API_KEY = os.getenv("FIRECRAWL_API")
+FIRECRAWL_API = os.getenv("FIRECRAWL_API")
+DEEPSEEK_API = os.getenv("DEEPSEEK_API")
 
 banks = [
     "https://www.tawhidbank.tj/"
@@ -12,10 +14,11 @@ for url in banks:
     print("\n====================")
     print("Checking:", url)
 
+    # FIRECRAWL
     response = requests.post(
         "https://api.firecrawl.dev/v1/scrape",
         headers={
-            "Authorization": f"Bearer {API_KEY}",
+            "Authorization": f"Bearer {FIRECRAWL_API}",
             "Content-Type": "application/json"
         },
         json={
@@ -27,14 +30,56 @@ for url in banks:
 
     data = response.json()
 
-    if "data" in data and "markdown" in data["data"]:
-
-        print("\n========== WEBSITE TEXT ==========\n")
-
-        print(data["data"]["markdown"])
-
-        print("\n========== END ==========\n")
-
-    else:
-        print("ERROR:")
+    if "data" not in data:
+        print("Firecrawl error")
         print(data)
+        continue
+
+    website_text = data["data"]["markdown"]
+
+    print("TEXT LOADED")
+
+    # DEEPSEEK AI
+    ai_response = requests.post(
+        "https://api.deepseek.com/chat/completions",
+        headers={
+            "Authorization": f"Bearer {DEEPSEEK_API}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "deepseek-chat",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": """
+Ту AI барои истихроҷи қурби асъор ҳастӣ.
+Фақат JSON баргардон.
+Фақат USD EUR RUB гир.
+Формат:
+
+{
+  "usd_buy": "",
+  "usd_sell": "",
+  "eur_buy": "",
+  "eur_sell": "",
+  "rub_buy": "",
+  "rub_sell": ""
+}
+"""
+                },
+                {
+                    "role": "user",
+                    "content": website_text
+                }
+            ],
+            "temperature": 0
+        }
+    )
+
+    result = ai_response.json()
+
+    print("\n===== AI JSON =====\n")
+
+    print(
+        result["choices"][0]["message"]["content"]
+    )
