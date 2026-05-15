@@ -1,9 +1,6 @@
 name: Firecrawl Python
 
 on:
-  schedule:
-    - cron: "0 */12 * * *"
-
   workflow_dispatch:
 
 jobs:
@@ -11,17 +8,31 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      FIRECRAWL_API: ${{ secrets.FIRECRAWL_API }}
+      OPENROUTER_API: ${{ secrets.OPENROUTER_API }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
-      - run: pip install -r requirements.txt
+      - name: Install requirements
+        run: pip install -r requirements.txt
 
-      - run: python main.py
-        env:
-          FIRECRAWL_API: ${{ secrets.FIRECRAWL_API }}
+      - name: Run python
+        run: python main.py
+
+      - name: Commit data.json
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+          git add data.json
+
+          git commit -m "update data" || echo "No changes"
+
+          git push
