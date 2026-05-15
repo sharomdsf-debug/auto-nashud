@@ -124,8 +124,8 @@ buy = "0.0000"
 sell = "0.0000"
 
 6. If ONLY ONE rate exists:
-buy = "0.0000"
-sell = existing rate
+buy = existing rate
+sell = "0.0000"
 
 7. If BOTH buy and sell exist:
 use real values.
