@@ -3,7 +3,7 @@ import os
 import json
 
 FIRECRAWL_API = os.getenv("FIRECRAWL_API")
-DEEPSEEK_API = os.getenv("DEEPSEEK_API")
+GROQ_API = os.getenv("GROQ_API")
 
 banks = [
     "https://www.tawhidbank.tj/"
@@ -39,15 +39,15 @@ for url in banks:
 
     print("TEXT LOADED")
 
-    # DEEPSEEK
+    # GROQ AI
     ai_response = requests.post(
-        "https://api.deepseek.com/chat/completions",
+        "https://api.groq.com/openai/v1/chat/completions",
         headers={
-            "Authorization": f"Bearer {DEEPSEEK_API}",
+            "Authorization": f"Bearer {GROQ_API}",
             "Content-Type": "application/json"
         },
         json={
-            "model": "deepseek-chat",
+            "model": "llama3-70b-8192",
             "messages": [
                 {
                     "role": "system",
@@ -81,7 +81,7 @@ for url in banks:
 
     result = ai_response.json()
 
-    print("\n===== DEEPSEEK RESPONSE =====\n")
+    print("\n===== GROQ RESPONSE =====\n")
 
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
@@ -92,4 +92,4 @@ for url in banks:
             result["choices"][0]["message"]["content"]
         )
     else:
-        print("DEEPSEEK ERROR")
+        print("GROQ ERROR")
