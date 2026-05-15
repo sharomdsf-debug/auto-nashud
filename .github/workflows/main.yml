@@ -3,6 +3,9 @@ name: Firecrawl Python
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -12,19 +15,22 @@ jobs:
       OPENROUTER_API: ${{ secrets.OPENROUTER_API }}
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install requirements
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
 
-      - name: Run python
-        run: python main.py
+      - name: Run Python
+        run: |
+          python main.py
 
       - name: Commit data.json
         run: |
@@ -33,6 +39,6 @@ jobs:
 
           git add data.json
 
-          git commit -m "update data" || echo "No changes"
+          git commit -m "update currency data" || echo "No changes"
 
           git push
