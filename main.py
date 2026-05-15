@@ -2,7 +2,7 @@ import requests
 import json
 
 # API KEYS
-FIRECRAWL_API = "FIRECRAWL_API_HERE"
+FIRECRAWL_API = "fc-14ada6fed79d4c0f9c39ad1bf213aad3"
 
 DEEPSEEK_API = "sk-825822e3551848e58b03d5bb284ea8cf"
 
