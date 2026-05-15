@@ -31,7 +31,7 @@ for url in banks:
     data = response.json()
 
     if "data" not in data:
-        print("Firecrawl error")
+        print("FIRECRAWL ERROR:")
         print(data)
         continue
 
@@ -39,7 +39,7 @@ for url in banks:
 
     print("TEXT LOADED")
 
-    # DEEPSEEK AI
+    # DEEPSEEK
     ai_response = requests.post(
         "https://api.deepseek.com/chat/completions",
         headers={
@@ -53,8 +53,11 @@ for url in banks:
                     "role": "system",
                     "content": """
 Ту AI барои истихроҷи қурби асъор ҳастӣ.
+
 Фақат JSON баргардон.
+
 Фақат USD EUR RUB гир.
+
 Формат:
 
 {
@@ -78,8 +81,15 @@ for url in banks:
 
     result = ai_response.json()
 
+    print("\n===== DEEPSEEK RESPONSE =====\n")
+
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+
     print("\n===== AI JSON =====\n")
 
-    print(
-        result["choices"][0]["message"]["content"]
-    )
+    if "choices" in result:
+        print(
+            result["choices"][0]["message"]["content"]
+        )
+    else:
+        print("DEEPSEEK ERROR")
