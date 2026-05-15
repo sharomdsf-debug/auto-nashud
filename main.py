@@ -1,10 +1,9 @@
 import requests
 import json
+import re
 
-# API KEYS
+# FIRECRAWL API
 FIRECRAWL_API = "fc-14ada6fed79d4c0f9c39ad1bf213aad3"
-
-OPENROUTER_API = "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"
 
 # WEBSITE
 url = "https://www.tawhidbank.tj/"
@@ -32,95 +31,47 @@ response = requests.post(
 
 data = response.json()
 
+# DEBUG
 print("\n===== FIRECRAWL RESPONSE =====\n")
-print(json.dumps(data, indent=2, ensure_ascii=False)[:1500])
+print(json.dumps(data, indent=2, ensure_ascii=False)[:1000])
 
 # CHECK
 if "data" not in data:
     print("\nFIRECRAWL ERROR")
     exit()
 
-website_text = data["data"]["markdown"]
+# WEBSITE TEXT
+text = data["data"]["markdown"]
 
 print("\nTEXT LOADED")
 
 # =========================
-# PROMPT
+# REGEX
 # =========================
 
-prompt = f"""
-Аз ҳамин матн танҳо қурби асъорро ёб.
-
-Фақат JSON баргардон.
-
-Формат:
-
-{{
-  "usd_buy": "",
-  "usd_sell": "",
-  "eur_buy": "",
-  "eur_sell": "",
-  "rub_buy": "",
-  "rub_sell": ""
-}}
-
-TEXT:
-{website_text[:6000]}
-"""
+usd = re.search(r'USD\\s+(\\d+\\.\\d+)\\s+(\\d+\\.\\d+)', text)
+eur = re.search(r'EUR\\s+(\\d+\\.\\d+)\\s+(\\d+\\.\\d+)', text)
+rub = re.search(r'RUB\\s+(\\d+\\.\\d+)\\s+(\\d+\\.\\d+)', text)
 
 # =========================
-# OPENROUTER AI
+# JSON RESULT
 # =========================
 
-ai_response = requests.post(
-    "https://openrouter.ai/api/v1/chat/completions",
-    headers={
-        "Authorization": f"Bearer {OPENROUTER_API}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com",
-        "X-Title": "currency-parser"
-    },
-    json={
-        "model": "mistralai/mistral-7b-instruct:free",
-        "messages": [
-            {
-                "role": "system",
-                "content": "Фақат JSON баргардон."
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        "temperature": 0
-    },
-    timeout=120
-)
+result = {
+    "usd_buy": usd.group(1) if usd else None,
+    "usd_sell": usd.group(2) if usd else None,
 
-print("\n===== OPENROUTER RAW RESPONSE =====\n")
-print(ai_response.text)
+    "eur_buy": eur.group(1) if eur else None,
+    "eur_sell": eur.group(2) if eur else None,
+
+    "rub_buy": rub.group(1) if rub else None,
+    "rub_sell": rub.group(2) if rub else None
+}
 
 # =========================
-# JSON PARSE
+# PRINT JSON
 # =========================
 
-try:
+print("\n===== FINAL JSON =====\n")
 
-    result = ai_response.json()
-
-    print("\n===== AI RESPONSE =====\n")
-
-    print(json.dumps(result, indent=2, ensure_ascii=False))
-
-    print("\n===== FINAL JSON =====\n")
-
-    if "choices" in result:
-        print(
-            result["choices"][0]["message"]["content"]
-        )
-    else:
-        print("OPENROUTER ERROR")
-
-except Exception as e:
-    print("\nJSON ERROR")
-    print(str(e))
+print(json.dumps(result, indent=2, ensure_ascii=False))
