@@ -1,47 +1,55 @@
 import requests
-import os
 import json
 
-FIRECRAWL_API = os.getenv("FIRECRAWL_API")
+# API KEYS
+FIRECRAWL_API = "FIRECRAWL_API_HERE"
 
-OPENROUTER_API = "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"
+DEEPSEEK_API = "sk-825822e3551848e58b03d5bb284ea8cf"
 
-banks = [
-    "https://www.tawhidbank.tj/"
-]
+# WEBSITE
+url = "https://www.tawhidbank.tj/"
 
-for url in banks:
+print("\n====================")
+print("Checking:", url)
 
-    print("\n====================")
-    print("Checking:", url)
+# =========================
+# FIRECRAWL SCRAPE
+# =========================
 
-    # FIRECRAWL
-    response = requests.post(
-        "https://api.firecrawl.dev/v1/scrape",
-        headers={
-            "Authorization": f"Bearer {FIRECRAWL_API}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "url": url,
-            "formats": ["markdown"],
-            "waitFor": 10000
-        }
-    )
+response = requests.post(
+    "https://api.firecrawl.dev/v1/scrape",
+    headers={
+        "Authorization": f"Bearer {FIRECRAWL_API}",
+        "Content-Type": "application/json"
+    },
+    json={
+        "url": url,
+        "formats": ["markdown"],
+        "waitFor": 10000
+    },
+    timeout=120
+)
 
-    data = response.json()
+data = response.json()
 
-    if "data" not in data:
-        print("FIRECRAWL ERROR")
-        print(data)
-        continue
+print("\n===== FIRECRAWL RESPONSE =====\n")
+print(json.dumps(data, indent=2, ensure_ascii=False)[:2000])
 
-    website_text = data["data"]["markdown"]
+# CHECK
+if "data" not in data:
+    print("\nFIRECRAWL ERROR")
+    exit()
 
-    print("TEXT LOADED")
+website_text = data["data"]["markdown"]
 
-    prompt = f"""
-Аз ҳамин матн танҳо қурби асъорро ёб.
+print("\nTEXT LOADED")
+
+# =========================
+# PROMPT
+# =========================
+
+prompt = f"""
+Аз ҳамин матн қурби асъорро ёб.
 
 Фақат JSON баргардон.
 
@@ -57,46 +65,60 @@ for url in banks:
 }}
 
 TEXT:
-{website_text[:5000]}
+{website_text[:6000]}
 """
 
-    # OPENROUTER AI
-    ai_response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {OPENROUTER_API}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "mistralai/mistral-7b-instruct:free",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "Фақат JSON баргардон."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "temperature": 0
-        },
-        timeout=120
-    )
+# =========================
+# DEEPSEEK AI
+# =========================
+
+ai_response = requests.post(
+    "https://api.deepseek.com/chat/completions",
+    headers={
+        "Authorization": f"Bearer {DEEPSEEK_API}",
+        "Content-Type": "application/json"
+    },
+    json={
+        "model": "deepseek-chat",
+        "messages": [
+            {
+                "role": "system",
+                "content": "Фақат JSON баргардон."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        "temperature": 0
+    },
+    timeout=120
+)
+
+print("\n===== DEEPSEEK RAW RESPONSE =====\n")
+print(ai_response.text)
+
+# =========================
+# JSON PARSE
+# =========================
+
+try:
 
     result = ai_response.json()
 
-    print("\n===== OPENROUTER RESPONSE =====\n")
+    print("\n===== AI RESPONSE =====\n")
 
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
-    print("\n===== AI JSON =====\n")
+    print("\n===== FINAL JSON =====\n")
 
-    try:
+    if "choices" in result:
         print(
             result["choices"][0]["message"]["content"]
         )
+    else:
+        print("DEEPSEEK ERROR")
 
-    except Exception as e:
-        print("AI ERROR")
-        print(e)
+except Exception as e:
+    print("\nJSON ERROR")
+    print(str(e))
