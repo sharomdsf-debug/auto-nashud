@@ -76,6 +76,7 @@ for bank in banks:
         data = response.json()
 
     except Exception as e:
+
         print("FIRECRAWL ERROR:", e)
         continue
 
@@ -86,9 +87,13 @@ for bank in banks:
     markdown = ""
 
     if "data" in data and "markdown" in data["data"]:
+
         markdown = data["data"]["markdown"]
+
         print("TEXT LOADED")
+
     else:
+
         print("NO MARKDOWN")
         continue
 
@@ -97,41 +102,67 @@ for bank in banks:
     # ==========================
 
     prompt = f"""
-You are a currency extraction AI.
+You are an AI currency extraction system.
 
-Extract ONLY currency exchange rates from this text.
+Extract ONLY exchange rates from the text.
 
-Currencies:
+SUPPORTED CURRENCIES:
 USD
 EUR
 RUB
 CNY
 KZT
 
-Rules:
-- Return ONLY JSON
-- No markdown
-- No explanation
-- If currency missing use:
-"0.0000"
+IMPORTANT RULES:
 
-FORMAT:
+1. Return ONLY valid JSON.
+2. No markdown.
+3. No explanation.
+4. No comments.
+5. If currency not found:
+buy = "0.0000"
+sell = "0.0000"
+
+6. If ONLY ONE rate exists:
+buy = "0.0000"
+sell = existing rate
+
+7. If BOTH buy and sell exist:
+use real values.
+
+8. Never invent values.
+
+OUTPUT FORMAT:
 
 {{
-  "USD": {{"buy":"0.0000","sell":"0.0000"}},
-  "EUR": {{"buy":"0.0000","sell":"0.0000"}},
-  "RUB": {{"buy":"0.0000","sell":"0.0000"}},
-  "CNY": {{"buy":"0.0000","sell":"0.0000"}},
-  "KZT": {{"buy":"0.0000","sell":"0.0000"}}
+  "USD": {{
+    "buy": "0.0000",
+    "sell": "0.0000"
+  }},
+  "EUR": {{
+    "buy": "0.0000",
+    "sell": "0.0000"
+  }},
+  "RUB": {{
+    "buy": "0.0000",
+    "sell": "0.0000"
+  }},
+  "CNY": {{
+    "buy": "0.0000",
+    "sell": "0.0000"
+  }},
+  "KZT": {{
+    "buy": "0.0000",
+    "sell": "0.0000"
+  }}
 }}
 
 TEXT:
-
 {markdown[:12000]}
 """
 
     # ==========================
-    # OPENROUTER AI
+    # AI REQUEST
     # ==========================
 
     try:
@@ -149,7 +180,8 @@ TEXT:
                         "role": "user",
                         "content": prompt
                     }
-                ]
+                ],
+                "temperature": 0
             },
             timeout=30
         )
@@ -157,11 +189,13 @@ TEXT:
         ai_data = ai_response.json()
 
         print("\n========== AI RESPONSE ==========\n")
-        print(ai_data)
+
+        print(json.dumps(ai_data, ensure_ascii=False, indent=2))
 
         content = ai_data["choices"][0]["message"]["content"]
 
     except Exception as e:
+
         print("AI ERROR:", e)
         continue
 
@@ -194,10 +228,11 @@ TEXT:
 # ==============================
 
 with open("data.json", "w", encoding="utf-8") as f:
+
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
 # ==============================
-# PRINT
+# PRINT FINAL JSON
 # ==============================
 
 print("\n========== FINAL JSON ==========\n")
