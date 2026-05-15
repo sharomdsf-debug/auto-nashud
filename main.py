@@ -3,7 +3,6 @@ import os
 import json
 
 FIRECRAWL_API = os.getenv("FIRECRAWL_API")
-GROQ_API = os.getenv("GROQ_API")
 
 banks = [
     "https://www.tawhidbank.tj/"
@@ -31,7 +30,7 @@ for url in banks:
     data = response.json()
 
     if "data" not in data:
-        print("FIRECRAWL ERROR:")
+        print("FIRECRAWL ERROR")
         print(data)
         continue
 
@@ -39,57 +38,40 @@ for url in banks:
 
     print("TEXT LOADED")
 
-    # GROQ AI
+    # HUGGINGFACE AI
     ai_response = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {GROQ_API}",
-            "Content-Type": "application/json"
-        },
+        "https://api-inference.huggingface.co/models/google/flan-t5-large",
         json={
-            "model": "llama3-70b-8192",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": """
-Ту AI барои истихроҷи қурби асъор ҳастӣ.
-
-Фақат JSON баргардон.
-
-Фақат USD EUR RUB гир.
+            "inputs": f"""
+Аз ин матн қурби USD EUR RUB-ро ёб
+ва фақат JSON баргардон.
 
 Формат:
 
-{
+{{
   "usd_buy": "",
   "usd_sell": "",
   "eur_buy": "",
   "eur_sell": "",
   "rub_buy": "",
   "rub_sell": ""
-}
+}}
+
+Матн:
+
+{website_text}
 """
-                },
-                {
-                    "role": "user",
-                    "content": website_text
-                }
-            ],
-            "temperature": 0
-        }
+        },
+        timeout=120
     )
 
-    result = ai_response.json()
+    print("\n===== HUGGINGFACE RESPONSE =====\n")
 
-    print("\n===== GROQ RESPONSE =====\n")
+    try:
+        result = ai_response.json()
 
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+        print(json.dumps(result, indent=2, ensure_ascii=False))
 
-    print("\n===== AI JSON =====\n")
-
-    if "choices" in result:
-        print(
-            result["choices"][0]["message"]["content"]
-        )
-    else:
-        print("GROQ ERROR")
+    except Exception as e:
+        print("ERROR:")
+        print(e)
