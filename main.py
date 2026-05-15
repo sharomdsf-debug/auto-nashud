@@ -2,17 +2,18 @@ import requests
 import os
 import re
 import json
+import subprocess
 from datetime import datetime
 
-# =========================
+# ==========================================
 # FIRECRAWL API
-# =========================
+# ==========================================
 
 API_KEY = os.getenv("FIRECRAWL_API")
 
-# =========================
+# ==========================================
 # BANKS
-# =========================
+# ==========================================
 
 banks = [
     {
@@ -32,9 +33,9 @@ banks = [
     }
 ]
 
-# =========================
+# ==========================================
 # DEFAULT CURRENCIES
-# =========================
+# ==========================================
 
 default_currencies = {
     "USD": {"buy": "0.0000", "sell": "0.0000"},
@@ -44,9 +45,9 @@ default_currencies = {
     "KZT": {"buy": "0.0000", "sell": "0.0000"}
 }
 
-# =========================
+# ==========================================
 # FINAL JSON
-# =========================
+# ==========================================
 
 final_json = {
     "project_name": "ASOR TJ",
@@ -56,30 +57,123 @@ final_json = {
     "rates": []
 }
 
-# =========================
-# FUNCTION
-# =========================
+# ==========================================
+# FIND CURRENCY
+# ==========================================
 
 def find_currency(text, currency):
 
-    pattern = rf"{currency}\s+([0-9.]+)\s+([0-9.]+)"
+    lines = text.splitlines()
 
-    match = re.search(pattern, text)
+    cleaned = []
 
-    if match:
-        return {
-            "buy": match.group(1),
-            "sell": match.group(2)
-        }
+    for line in lines:
+
+        line = line.strip()
+
+        if line:
+            cleaned.append(line)
+
+    lines = cleaned
+
+    currency_aliases = {
+        "USD": [
+            "USD",
+            "USDTJS",
+            "USD/TJS",
+            "$",
+            "ДОЛЛАР",
+            "ДОЛЛАРИ ИМА",
+            "ДОЛЛАР США"
+        ],
+        "EUR": [
+            "EUR",
+            "EURTJS",
+            "EUR/TJS",
+            "€",
+            "ЕВРО"
+        ],
+        "RUB": [
+            "RUB",
+            "RUB/TJS",
+            "RUBTJS",
+            "РУБ",
+            "РУБЛ",
+            "РУБЛЬ"
+        ],
+        "CNY": [
+            "CNY",
+            "CNY/TJS",
+            "ЮАН",
+            "YUAN"
+        ],
+        "KZT": [
+            "KZT",
+            "KZT/TJS",
+            "ТЕНГЕ",
+            "КАЗАХСТОН"
+        ]
+    }
+
+    aliases = currency_aliases.get(currency, [currency])
+
+    for i, line in enumerate(lines):
+
+        upper_line = line.upper()
+
+        found = False
+
+        for alias in aliases:
+
+            if alias.upper() in upper_line:
+                found = True
+                break
+
+        if not found:
+            continue
+
+        nearby = " ".join(lines[i:i+10])
+
+        numbers = re.findall(r"\d+[.,]\d+", nearby)
+
+        numbers = [n.replace(",", ".") for n in numbers]
+
+        filtered = []
+
+        for n in numbers:
+
+            try:
+
+                value = float(n)
+
+                if 0.0001 <= value <= 1000:
+                    filtered.append(f"{value:.4f}")
+
+            except:
+                pass
+
+        if len(filtered) >= 2:
+
+            return {
+                "buy": filtered[0],
+                "sell": filtered[1]
+            }
+
+        elif len(filtered) == 1:
+
+            return {
+                "buy": filtered[0],
+                "sell": "0.0000"
+            }
 
     return {
         "buy": "0.0000",
         "sell": "0.0000"
     }
 
-# =========================
-# LOOP BANKS
-# =========================
+# ==========================================
+# SCRAPE BANKS
+# ==========================================
 
 for bank in banks:
 
@@ -112,21 +206,13 @@ for bank in banks:
 
         print("TEXT LOADED")
 
-        currencies = default_currencies.copy()
-
-        # =========================
-        # PARSE
-        # =========================
-
-        currencies["USD"] = find_currency(text, "USD")
-        currencies["EUR"] = find_currency(text, "EUR")
-        currencies["RUB"] = find_currency(text, "RUB")
-        currencies["CNY"] = find_currency(text, "CNY")
-        currencies["KZT"] = find_currency(text, "KZT")
-
-        # =========================
-        # APPEND
-        # =========================
+        currencies = {
+            "USD": find_currency(text, "USD"),
+            "EUR": find_currency(text, "EUR"),
+            "RUB": find_currency(text, "RUB"),
+            "CNY": find_currency(text, "CNY"),
+            "KZT": find_currency(text, "KZT")
+        }
 
         final_json["rates"].append({
             "bank_name": bank["name"],
@@ -139,17 +225,57 @@ for bank in banks:
         print("ERROR:")
         print(str(e))
 
-# =========================
+# ==========================================
 # SAVE JSON
-# =========================
+# ==========================================
 
 with open("rates.json", "w", encoding="utf-8") as f:
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
-# =========================
-# PRINT
-# =========================
+# ==========================================
+# PRINT RESULT
+# ==========================================
 
 print("\n========== FINAL JSON ==========\n")
 
 print(json.dumps(final_json, ensure_ascii=False, indent=2))
+
+# ==========================================
+# GITHUB AUTO PUSH
+# ==========================================
+
+try:
+
+    subprocess.run([
+        "git",
+        "config",
+        "--global",
+        "user.name",
+        "github-actions"
+    ])
+
+    subprocess.run([
+        "git",
+        "config",
+        "--global",
+        "user.email",
+        "github-actions@github.com"
+    ])
+
+    subprocess.run(["git", "add", "rates.json"])
+
+    subprocess.run([
+        "git",
+        "commit",
+        "-m",
+        "update exchange rates"
+    ])
+
+    subprocess.run(["git", "push"])
+
+    print("\nGITHUB PUSH SUCCESS")
+
+except Exception as e:
+
+    print("\nGITHUB PUSH ERROR")
+    print(str(e))
