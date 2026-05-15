@@ -4,7 +4,7 @@ import json
 # API KEYS
 FIRECRAWL_API = "fc-14ada6fed79d4c0f9c39ad1bf213aad3"
 
-DEEPSEEK_API = "sk-825822e3551848e58b03d5bb284ea8cf"
+OPENROUTER_API = "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"
 
 # WEBSITE
 url = "https://www.tawhidbank.tj/"
@@ -33,7 +33,7 @@ response = requests.post(
 data = response.json()
 
 print("\n===== FIRECRAWL RESPONSE =====\n")
-print(json.dumps(data, indent=2, ensure_ascii=False)[:2000])
+print(json.dumps(data, indent=2, ensure_ascii=False)[:1500])
 
 # CHECK
 if "data" not in data:
@@ -49,7 +49,7 @@ print("\nTEXT LOADED")
 # =========================
 
 prompt = f"""
-Аз ҳамин матн қурби асъорро ёб.
+Аз ҳамин матн танҳо қурби асъорро ёб.
 
 Фақат JSON баргардон.
 
@@ -69,17 +69,19 @@ TEXT:
 """
 
 # =========================
-# DEEPSEEK AI
+# OPENROUTER AI
 # =========================
 
 ai_response = requests.post(
-    "https://api.deepseek.com/chat/completions",
+    "https://openrouter.ai/api/v1/chat/completions",
     headers={
-        "Authorization": f"Bearer {DEEPSEEK_API}",
-        "Content-Type": "application/json"
+        "Authorization": f"Bearer {OPENROUTER_API}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://github.com",
+        "X-Title": "currency-parser"
     },
     json={
-        "model": "deepseek-chat",
+        "model": "mistralai/mistral-7b-instruct:free",
         "messages": [
             {
                 "role": "system",
@@ -95,7 +97,7 @@ ai_response = requests.post(
     timeout=120
 )
 
-print("\n===== DEEPSEEK RAW RESPONSE =====\n")
+print("\n===== OPENROUTER RAW RESPONSE =====\n")
 print(ai_response.text)
 
 # =========================
@@ -117,7 +119,7 @@ try:
             result["choices"][0]["message"]["content"]
         )
     else:
-        print("DEEPSEEK ERROR")
+        print("OPENROUTER ERROR")
 
 except Exception as e:
     print("\nJSON ERROR")
