@@ -1,59 +1,32 @@
 {
   "project_name": "ASOR TJ",
-  "last_updated": "🔹15.05.2026 19:46",
+  "last_updated": "🔹15.05.2026 20:06",
   "base_currency": "TJS",
   "status": "success",
   "rates": [
-    {
-      "bank_name": "Тавҳидбонк",
-      "bank_id": "tawhidbank",
-      "website": "https://www.tawhidbank.tj/",
-      "currencies": {
-        "USD": {
-          "buy": "9.2600",
-          "sell": "9.3600"
-        },
-        "EUR": {
-          "buy": "10.7500",
-          "sell": "10.9500"
-        },
-        "RUB": {
-          "buy": "0.1250",
-          "sell": "0.1280"
-        },
-        "CNY": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        },
-        "KZT": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        }
-      }
-    },
     {
       "bank_name": "Бонки Миллии Тоҷикистон",
       "bank_id": "nbt",
       "website": "https://nbt.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.3450",
+          "buy": "0.0000",
           "sell": "9.3450"
         },
         "EUR": {
-          "buy": "10.8757",
+          "buy": "0.0000",
           "sell": "10.8757"
         },
         "RUB": {
-          "buy": "0.1277",
+          "buy": "0.0000",
           "sell": "0.1277"
         },
         "CNY": {
-          "buy": "1.3724",
+          "buy": "0.0000",
           "sell": "1.3724"
         },
         "KZT": {
-          "buy": "0.1971",
+          "buy": "0.0000",
           "sell": "0.1971"
         }
       }
