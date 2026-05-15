@@ -4,16 +4,11 @@ import json
 from datetime import datetime
 
 # ==========================================
-# FIRECRAWL API
+# API KEYS
 # ==========================================
 
 FIRECRAWL_API = os.getenv("FIRECRAWL_API")
-
-# ==========================================
-# OPENROUTER / DEEPSEEK
-# ==========================================
-
-OPENROUTER_API = "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"
+OPENROUTER_API = os.getenv("OPENROUTER_API")
 
 # ==========================================
 # BANKS
@@ -58,37 +53,50 @@ final_json = {
 
 for bank in banks:
 
-    print("\n====================")
+    print("\n========================")
     print("Checking:", bank["url"])
 
     # ==========================================
     # FIRECRAWL SCRAPE
     # ==========================================
 
-    response = requests.post(
-        "https://api.firecrawl.dev/v1/scrape",
-        headers={
-            "Authorization": f"Bearer {FIRECRAWL_API}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "url": bank["url"],
-            "formats": ["markdown"],
-            "waitFor": 10000
-        },
-        timeout=120
-    )
+    try:
 
-    data = response.json()
+        response = requests.post(
+            "https://api.firecrawl.dev/v1/scrape",
+            headers={
+                "Authorization": f"Bearer {FIRECRAWL_API}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "url": bank["url"],
+                "formats": ["markdown"],
+                "waitFor": 10000
+            },
+            timeout=30
+        )
+
+        data = response.json()
+
+    except Exception as e:
+
+        print("FIRECRAWL ERROR")
+        print(e)
+
+        continue
+
+    # ==========================================
+    # CHECK MARKDOWN
+    # ==========================================
 
     if "data" not in data or "markdown" not in data["data"]:
 
-        print("SCRAPE ERROR")
+        print("SCRAPE FAILED")
         print(data)
 
         continue
 
-    website_text = data["data"]["markdown"]
+    markdown_text = data["data"]["markdown"]
 
     print("TEXT LOADED")
 
@@ -97,9 +105,9 @@ for bank in banks:
     # ==========================================
 
     prompt = f"""
-Аз ҳамин матни вебсайт қурби асъорро ёб.
+Аз ҳамин markdown қурби асъорро ёб.
 
-Фақат ҳамин асъорҳоро гир:
+Танҳо ҳамин асъорҳоро гир:
 
 USD
 EUR
@@ -107,7 +115,7 @@ RUB
 CNY
 KZT
 
-Агар ягон асъор ёфт нашавад:
+Агар асъор ёфт нашавад:
 buy ва sell = 0.0000
 
 Фақат JSON баргардон.
@@ -127,38 +135,51 @@ buy ва sell = 0.0000
   }}
 }}
 
-TEXT:
-{website_text[:15000]}
+MARKDOWN:
+{markdown_text[:15000]}
 """
 
     # ==========================================
-    # DEEPSEEK AI
+    # AI REQUEST
     # ==========================================
 
-    ai_response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {OPENROUTER_API}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "deepseek/deepseek-v4-flash:free",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "Фақат JSON баргардон."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "temperature": 0
-        },
-        timeout=120
-    )
+    try:
 
-    result = ai_response.json()
+        ai_response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_API}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "deepseek/deepseek-chat-v3-0324:free",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Фақат JSON баргардон."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0
+            },
+            timeout=30
+        )
+
+        result = ai_response.json()
+
+    except Exception as e:
+
+        print("AI REQUEST ERROR")
+        print(e)
+
+        continue
+
+    # ==========================================
+    # PRINT RAW AI RESPONSE
+    # ==========================================
 
     print("\n========== AI RESPONSE ==========\n")
 
@@ -176,20 +197,24 @@ TEXT:
 
         final_json["rates"].append(parsed)
 
-        print("\nBANK ADDED")
+        print("BANK ADDED")
 
     except Exception as e:
 
-        print("\nAI JSON ERROR")
-        print(str(e))
+        print("AI JSON ERROR")
+        print(e)
 
 # ==========================================
-# SAVE JSON
+# SAVE JSON FILE
 # ==========================================
 
 with open("data.json", "w", encoding="utf-8") as f:
 
     json.dump(final_json, f, ensure_ascii=False, indent=2)
+
+# ==========================================
+# PRINT FINAL JSON
+# ==========================================
 
 print("\n========== FINAL JSON ==========\n")
 
