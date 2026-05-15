@@ -38,7 +38,7 @@ for url in banks:
 
     print("TEXT LOADED")
 
-    # HUGGINGFACE AI
+    # HUGGINGFACE
     ai_response = requests.post(
         "https://api-inference.huggingface.co/models/google/flan-t5-large",
         json={
@@ -65,13 +65,6 @@ for url in banks:
         timeout=120
     )
 
-    print("\n===== HUGGINGFACE RESPONSE =====\n")
+    print("\n===== HUGGINGFACE RAW RESPONSE =====\n")
 
-    try:
-        result = ai_response.json()
-
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-
-    except Exception as e:
-        print("ERROR:")
-        print(e)
+    print(ai_response.text)
