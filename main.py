@@ -3,62 +3,59 @@ import os
 import json
 from datetime import datetime
 
-# ==========================================
+# ==============================
 # API KEYS
-# ==========================================
+# ==============================
 
 FIRECRAWL_API = os.getenv("FIRECRAWL_API")
 OPENROUTER_API = os.getenv("OPENROUTER_API")
 
-# ==========================================
+# ==============================
 # BANKS
-# ==========================================
+# ==============================
 
 banks = [
     {
         "name": "Тавҳидбонк",
         "id": "tawhidbank",
-        "website": "https://www.tawhidbank.tj",
-        "url": "https://www.tawhidbank.tj/"
+        "website": "https://www.tawhidbank.tj/"
     },
     {
         "name": "Бонки Миллии Тоҷикистон",
         "id": "nbt",
-        "website": "https://nbt.tj",
-        "url": "https://nbt.tj/"
+        "website": "https://nbt.tj/"
     },
     {
         "name": "Амонатбонк",
         "id": "amonatbonk",
-        "website": "https://amonatbonk.tj",
-        "url": "https://amonatbonk.tj/"
+        "website": "https://amonatbonk.tj/"
     }
 ]
 
-# ==========================================
+# ==============================
 # FINAL JSON
-# ==========================================
+# ==============================
 
 final_json = {
     "project_name": "ASOR TJ",
-    "last_updated": f"🔹{datetime.now().strftime('%d.%m.%Y %H:%M')}",
+    "last_updated": "🔹" + datetime.now().strftime("%d.%m.%Y %H:%M"),
     "base_currency": "TJS",
     "status": "success",
     "rates": []
 }
 
-# ==========================================
-# LOOP BANKS
-# ==========================================
+# ==============================
+# LOOP
+# ==============================
 
 for bank in banks:
 
-    print("\n========================")
-    print("Checking:", bank["url"])
+    print("\n============================")
+    print("Checking:", bank["website"])
 
-    # ==========================================
+    # ==========================
     # FIRECRAWL SCRAPE
-    # ==========================================
+    # ==========================
 
     try:
 
@@ -69,7 +66,7 @@ for bank in banks:
                 "Content-Type": "application/json"
             },
             json={
-                "url": bank["url"],
+                "url": bank["website"],
                 "formats": ["markdown"],
                 "waitFor": 10000
             },
@@ -79,69 +76,63 @@ for bank in banks:
         data = response.json()
 
     except Exception as e:
-
-        print("FIRECRAWL ERROR")
-        print(e)
-
+        print("FIRECRAWL ERROR:", e)
         continue
 
-    # ==========================================
-    # CHECK MARKDOWN
-    # ==========================================
+    # ==========================
+    # GET MARKDOWN
+    # ==========================
 
-    if "data" not in data or "markdown" not in data["data"]:
+    markdown = ""
 
-        print("SCRAPE FAILED")
-        print(data)
-
+    if "data" in data and "markdown" in data["data"]:
+        markdown = data["data"]["markdown"]
+        print("TEXT LOADED")
+    else:
+        print("NO MARKDOWN")
         continue
 
-    markdown_text = data["data"]["markdown"]
-
-    print("TEXT LOADED")
-
-    # ==========================================
+    # ==========================
     # AI PROMPT
-    # ==========================================
+    # ==========================
 
     prompt = f"""
-Аз ҳамин markdown қурби асъорро ёб.
+You are a currency extraction AI.
 
-Танҳо ҳамин асъорҳоро гир:
+Extract ONLY currency exchange rates from this text.
 
+Currencies:
 USD
 EUR
 RUB
 CNY
 KZT
 
-Агар асъор ёфт нашавад:
-buy ва sell = 0.0000
+Rules:
+- Return ONLY JSON
+- No markdown
+- No explanation
+- If currency missing use:
+"0.0000"
 
-Фақат JSON баргардон.
-
-Формат:
+FORMAT:
 
 {{
-  "bank_name": "{bank["name"]}",
-  "bank_id": "{bank["id"]}",
-  "website": "{bank["website"]}",
-  "currencies": {{
-    "USD": {{ "buy": "", "sell": "" }},
-    "EUR": {{ "buy": "", "sell": "" }},
-    "RUB": {{ "buy": "", "sell": "" }},
-    "CNY": {{ "buy": "", "sell": "" }},
-    "KZT": {{ "buy": "", "sell": "" }}
-  }}
+  "USD": {{"buy":"0.0000","sell":"0.0000"}},
+  "EUR": {{"buy":"0.0000","sell":"0.0000"}},
+  "RUB": {{"buy":"0.0000","sell":"0.0000"}},
+  "CNY": {{"buy":"0.0000","sell":"0.0000"}},
+  "KZT": {{"buy":"0.0000","sell":"0.0000"}}
 }}
 
-MARKDOWN:
-{markdown_text[:15000]}
+TEXT:
+
+{markdown[:12000]}
 """
 
-    # ==========================================
-    # AI REQUEST
-    # ==========================================
+    # ==========================
+    # OPENROUTER AI
+    # ==========================
 
     try:
 
@@ -155,67 +146,62 @@ MARKDOWN:
                 "model": "deepseek/deepseek-chat-v3-0324:free",
                 "messages": [
                     {
-                        "role": "system",
-                        "content": "Фақат JSON баргардон."
-                    },
-                    {
                         "role": "user",
                         "content": prompt
                     }
-                ],
-                "temperature": 0
+                ]
             },
             timeout=30
         )
 
-        result = ai_response.json()
+        ai_data = ai_response.json()
+
+        print("\n========== AI RESPONSE ==========\n")
+        print(ai_data)
+
+        content = ai_data["choices"][0]["message"]["content"]
 
     except Exception as e:
-
-        print("AI REQUEST ERROR")
-        print(e)
-
+        print("AI ERROR:", e)
         continue
 
-    # ==========================================
-    # PRINT RAW AI RESPONSE
-    # ==========================================
-
-    print("\n========== AI RESPONSE ==========\n")
-
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-
-    # ==========================================
-    # PARSE AI JSON
-    # ==========================================
+    # ==========================
+    # PARSE JSON
+    # ==========================
 
     try:
 
-        content = result["choices"][0]["message"]["content"]
-
-        parsed = json.loads(content)
-
-        final_json["rates"].append(parsed)
-
-        print("BANK ADDED")
+        currencies = json.loads(content)
 
     except Exception as e:
 
-        print("AI JSON ERROR")
-        print(e)
+        print("JSON ERROR:", e)
+        continue
 
-# ==========================================
-# SAVE JSON FILE
-# ==========================================
+    # ==========================
+    # ADD BANK
+    # ==========================
+
+    final_json["rates"].append({
+        "bank_name": bank["name"],
+        "bank_id": bank["id"],
+        "website": bank["website"],
+        "currencies": currencies
+    })
+
+# ==============================
+# SAVE JSON
+# ==============================
 
 with open("data.json", "w", encoding="utf-8") as f:
-
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
-# ==========================================
-# PRINT FINAL JSON
-# ==========================================
+# ==============================
+# PRINT
+# ==============================
 
 print("\n========== FINAL JSON ==========\n")
 
 print(json.dumps(final_json, ensure_ascii=False, indent=2))
+
+print("\nDATA SAVED TO data.json")
