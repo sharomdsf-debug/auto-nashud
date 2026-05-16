@@ -12,6 +12,15 @@ FIRECRAWL_API = os.getenv("FIRECRAWL_API")
 OPENROUTER_API = os.getenv("OPENROUTER_API")
 
 # ==============================
+# AI MODELS
+# ==============================
+
+models = [
+    "openai/gpt-oss-120b:free",
+    "deepseek/deepseek-v4-flash:free"
+]
+
+# ==============================
 # BANKS
 # ==============================
 
@@ -157,7 +166,7 @@ final_json = {
 }
 
 # ==============================
-# LOOP
+# LOOP BANKS
 # ==============================
 
 for bank in banks:
@@ -166,7 +175,7 @@ for bank in banks:
     print("CHECKING:", bank["website"])
 
     # ==========================
-    # FIRECRAWL REQUEST
+    # FIRECRAWL SCRAPE
     # ==========================
 
     try:
@@ -224,27 +233,13 @@ for bank in banks:
         continue
 
     # ==========================
-    # PROMPT
+    # AI PROMPT
     # ==========================
 
     prompt = f"""
-You are a professional currency extraction AI.
+You are an advanced AI currency extraction system.
 
-Your task:
 Extract ONLY real exchange rates from the text.
-
-IMPORTANT:
-
-1. Return ONLY VALID JSON.
-2. No markdown.
-3. No explanations.
-4. No comments.
-5. No extra text.
-6. Never invent values.
-7. Use ONLY rates found in text.
-8. If value not found:
-buy = "0.0000"
-sell = "0.0000"
 
 SUPPORTED CURRENCIES:
 USD
@@ -252,6 +247,34 @@ EUR
 RUB
 CNY
 KZT
+
+VERY IMPORTANT RULES:
+
+1. Return ONLY VALID JSON.
+2. No markdown.
+3. No explanations.
+4. No comments.
+5. No extra text.
+6. Never invent values.
+7. Use ONLY values found in text.
+8. Ignore phone numbers.
+9. Ignore percentages.
+10. Ignore credit amounts.
+11. Ignore years.
+12. Ignore deposit values.
+13. Ignore random numbers.
+14. ONLY extract currency exchange rates.
+
+If only ONE value exists:
+buy = value
+sell = value
+
+If both buy and sell exist:
+use real values.
+
+If currency not found:
+buy = "0.0000"
+sell = "0.0000"
 
 OUTPUT FORMAT:
 
@@ -282,63 +305,89 @@ TEXT:
 {markdown[:20000]}
 """
 
-    # ==========================
-    # AI RETRIES
-    # ==========================
-
     currencies = None
 
-    for attempt in range(5):
+    # ==========================
+    # TRY AI MODELS
+    # ==========================
 
-        print(f"AI TRY {attempt + 1}/5")
+    for model in models:
 
-        try:
+        print("\n============================")
+        print("USING MODEL:", model)
 
-            ai_response = requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {OPENROUTER_API}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "nvidia/nemotron-3-super-120b-a12b:free",
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ],
-                    "temperature": 0
-                },
-                timeout=120
-            )
+        for attempt in range(3):
 
-            ai_data = ai_response.json()
+            print(f"TRY {attempt + 1}/3")
 
-            print("========== AI RESPONSE ==========")
-            print(json.dumps(ai_data, ensure_ascii=False, indent=2))
+            try:
 
-            if "choices" not in ai_data:
+                ai_response = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {OPENROUTER_API}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": model,
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": prompt
+                            }
+                        ],
+                        "temperature": 0
+                    },
+                    timeout=120
+                )
 
-                print("NO CHOICES FOUND")
+                ai_data = ai_response.json()
+
+                print("\n========== AI RESPONSE ==========\n")
+                print(json.dumps(ai_data, ensure_ascii=False, indent=2))
+
+                # ======================
+                # CHECK CHOICES
+                # ======================
+
+                if "choices" not in ai_data:
+
+                    print("NO CHOICES FOUND")
+                    time.sleep(10)
+                    continue
+
+                content = ai_data["choices"][0]["message"]["content"]
+
+                # ======================
+                # PARSE JSON
+                # ======================
+
+                currencies = json.loads(content)
+
+                print("VALID JSON RECEIVED")
+
+                break
+
+            except Exception as e:
+
+                print("AI ERROR:", e)
                 time.sleep(10)
-                continue
 
-            content = ai_data["choices"][0]["message"]["content"]
+        # ======================
+        # IF SUCCESS BREAK
+        # ======================
 
-            currencies = json.loads(content)
+        if currencies is not None:
 
-            print("VALID JSON RECEIVED")
-
+            print("SUCCESS WITH:", model)
             break
 
-        except Exception as e:
+        else:
 
-            print("AI ERROR:", e)
-            time.sleep(10)
+            print("FAILED MODEL:", model)
 
     # ==========================
-    # FAILED AI
+    # FAILED ALL MODELS
     # ==========================
 
     if currencies is None:
@@ -346,7 +395,7 @@ TEXT:
         failed_banks.append({
             "bank": bank["name"],
             "website": bank["website"],
-            "reason": "AI FAILED"
+            "reason": "ALL AI MODELS FAILED"
         })
 
         continue
@@ -367,7 +416,7 @@ TEXT:
     time.sleep(3)
 
 # ==============================
-# SAVE JSON
+# SAVE DATA.JSON
 # ==============================
 
 with open("data.json", "w", encoding="utf-8") as f:
@@ -375,7 +424,7 @@ with open("data.json", "w", encoding="utf-8") as f:
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
 # ==============================
-# SAVE FAILED
+# SAVE FAILED_BANKS.JSON
 # ==============================
 
 with open("failed_banks.json", "w", encoding="utf-8") as f:
