@@ -3,16 +3,16 @@ import os
 import json
 from datetime import datetime
 
-# ======================================
+# ==========================================
 # API KEYS
-# ======================================
+# ==========================================
 
 FIRECRAWL_API = os.getenv("FIRECRAWL_API")
 OPENROUTER_API = os.getenv("OPENROUTER_API")
 
-# ======================================
+# ==========================================
 # BANKS
-# ======================================
+# ==========================================
 
 banks = [
     {
@@ -137,9 +137,9 @@ banks = [
     }
 ]
 
-# ======================================
-# DEFAULT CURRENCIES
-# ======================================
+# ==========================================
+# EMPTY CURRENCIES
+# ==========================================
 
 EMPTY_CURRENCIES = {
     "USD": {"buy": "0.0000", "sell": "0.0000"},
@@ -149,9 +149,9 @@ EMPTY_CURRENCIES = {
     "KZT": {"buy": "0.0000", "sell": "0.0000"}
 }
 
-# ======================================
+# ==========================================
 # FINAL JSON
-# ======================================
+# ==========================================
 
 final_json = {
     "project_name": "ASOR TJ",
@@ -161,20 +161,22 @@ final_json = {
     "rates": []
 }
 
-# ======================================
-# LOOP BANKS
-# ======================================
+# ==========================================
+# LOOP
+# ==========================================
 
 for bank in banks:
 
-    print("\n============================")
+    print("\n==============================")
     print("Checking:", bank["website"])
 
-    try:
+    markdown = ""
 
-        # ======================================
-        # FIRECRAWL
-        # ======================================
+    # ======================================
+    # FIRECRAWL
+    # ======================================
+
+    try:
 
         response = requests.post(
             "https://api.firecrawl.dev/v1/scrape",
@@ -185,6 +187,7 @@ for bank in banks:
             json={
                 "url": bank["website"],
                 "formats": ["markdown"],
+                "onlyMainContent": False,
                 "waitFor": 300000
             },
             timeout=300
@@ -192,42 +195,51 @@ for bank in banks:
 
         data = response.json()
 
-        if "data" not in data:
+        print("\nFIRECRAWL RESPONSE:\n")
+        print(json.dumps(data, ensure_ascii=False, indent=2)[:3000])
 
-            print("NO DATA")
+    except Exception as e:
 
-            final_json["rates"].append({
-                "bank_name": bank["name"],
-                "bank_id": bank["id"],
-                "currencies": EMPTY_CURRENCIES
-            })
+        print("FIRECRAWL ERROR:", e)
 
-            continue
+        final_json["rates"].append({
+            "bank_name": bank["name"],
+            "bank_id": bank["id"],
+            "currencies": EMPTY_CURRENCIES
+        })
 
-        markdown = data["data"].get("markdown", "")
+        continue
 
-        if not markdown:
+    # ======================================
+    # GET MARKDOWN
+    # ======================================
 
-            print("NO MARKDOWN")
+    if data.get("success") and data.get("data", {}).get("markdown"):
 
-            final_json["rates"].append({
-                "bank_name": bank["name"],
-                "bank_id": bank["id"],
-                "currencies": EMPTY_CURRENCIES
-            })
+        markdown = data["data"]["markdown"]
 
-            continue
+        print("\nTEXT LOADED")
 
-        print("TEXT LOADED")
+    else:
 
-        # ======================================
-        # PROMPT
-        # ======================================
+        print("\nNO DATA")
 
-        prompt = f"""
-You are an AI banking exchange-rate extraction system.
+        final_json["rates"].append({
+            "bank_name": bank["name"],
+            "bank_id": bank["id"],
+            "currencies": EMPTY_CURRENCIES
+        })
 
-Extract ONLY currency exchange rates from the markdown.
+        continue
+
+    # ======================================
+    # AI PROMPT
+    # ======================================
+
+    prompt = f"""
+You are an AI currency extraction system.
+
+Extract ONLY exchange rates from the website text.
 
 SUPPORTED CURRENCIES:
 USD
@@ -236,51 +248,67 @@ RUB
 CNY
 KZT
 
-VERY IMPORTANT RULES:
+IMPORTANT RULES:
 
-1. Return ONLY valid JSON.
+1. Return ONLY VALID JSON.
 2. No markdown.
 3. No explanation.
 4. No comments.
-5. No text before JSON.
-6. No text after JSON.
-7. Never invent values.
-8. If currency missing:
+5. No extra text.
+6. Never invent values.
+7. If currency not found:
 buy = "0.0000"
 sell = "0.0000"
 
-9. If ONLY ONE rate exists:
-use:
-"buy" = existing rate
-"sell" = "0.0000"
+8. If ONLY ONE rate exists:
+buy = rate
+sell = "0.0000"
 
-10. JSON MUST match EXACTLY this structure:
+9. If BOTH buy and sell exist:
+use real values.
+
+OUTPUT FORMAT:
 
 {{
-  "bank_name": "{bank['name']}",
-  "bank_id": "{bank['id']}",
-  "currencies": {{
-    "USD": {{"buy":"0.0000","sell":"0.0000"}},
-    "EUR": {{"buy":"0.0000","sell":"0.0000"}},
-    "RUB": {{"buy":"0.0000","sell":"0.0000"}},
-    "CNY": {{"buy":"0.0000","sell":"0.0000"}},
-    "KZT": {{"buy":"0.0000","sell":"0.0000"}}
+  "USD": {{
+    "buy": "0.0000",
+    "sell": "0.0000"
+  }},
+  "EUR": {{
+    "buy": "0.0000",
+    "sell": "0.0000"
+  }},
+  "RUB": {{
+    "buy": "0.0000",
+    "sell": "0.0000"
+  }},
+  "CNY": {{
+    "buy": "0.0000",
+    "sell": "0.0000"
+  }},
+  "KZT": {{
+    "buy": "0.0000",
+    "sell": "0.0000"
   }}
 }}
 
-MARKDOWN:
-{markdown[:30000]}
+TEXT:
+{markdown[:12000]}
 """
 
-        # ======================================
-        # AI REQUEST
-        # ======================================
+    # ======================================
+    # AI REQUEST
+    # ======================================
+
+    try:
 
         ai_response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {OPENROUTER_API}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://github.com",
+                "X-Title": "ASOR TJ"
             },
             json={
                 "model": "deepseek/deepseek-v4-flash:free",
@@ -297,20 +325,14 @@ MARKDOWN:
 
         ai_data = ai_response.json()
 
-        print("\n========== AI RESPONSE ==========")
-        print(json.dumps(ai_data, ensure_ascii=False, indent=2))
+        print("\n========== AI RESPONSE ==========\n")
+        print(json.dumps(ai_data, ensure_ascii=False, indent=2)[:4000])
 
         content = ai_data["choices"][0]["message"]["content"]
 
-        parsed = json.loads(content)
-
-        final_json["rates"].append(parsed)
-
-        print("BANK ADDED")
-
     except Exception as e:
 
-        print("ERROR:", str(e))
+        print("AI ERROR:", e)
 
         final_json["rates"].append({
             "bank_name": bank["name"],
@@ -318,14 +340,46 @@ MARKDOWN:
             "currencies": EMPTY_CURRENCIES
         })
 
-# ======================================
+        continue
+
+    # ======================================
+    # PARSE JSON
+    # ======================================
+
+    try:
+
+        currencies = json.loads(content)
+
+    except Exception as e:
+
+        print("JSON ERROR:", e)
+
+        currencies = EMPTY_CURRENCIES
+
+    # ======================================
+    # ADD BANK
+    # ======================================
+
+    final_json["rates"].append({
+        "bank_name": bank["name"],
+        "bank_id": bank["id"],
+        "currencies": currencies
+    })
+
+# ==========================================
 # SAVE JSON
-# ======================================
+# ==========================================
 
 with open("data.json", "w", encoding="utf-8") as f:
+
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
-print("\n========== FINAL JSON ==========")
+# ==========================================
+# PRINT FINAL JSON
+# ==========================================
+
+print("\n========== FINAL JSON ==========\n")
+
 print(json.dumps(final_json, ensure_ascii=False, indent=2))
 
 print("\nDATA SAVED TO data.json")
