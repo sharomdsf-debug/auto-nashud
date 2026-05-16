@@ -124,7 +124,7 @@ banks = [
     {
         "name": "Актив Бонк",
         "id": "aktivbank",
-        "website": "https://aktivbank.tj/"
+        "website": "https://activbank.tj/"
     },
     {
         "name": "Азизи-Молия",
@@ -208,9 +208,23 @@ for bank in banks:
     # ==========================
 
     prompt = f"""
-You are an AI currency extraction system.
+You are a professional AI financial data extraction system.
 
-Extract ONLY exchange rates from the text.
+Your ONLY task is to extract currency exchange rates from website text.
+
+IMPORTANT:
+
+The text may contain:
+- menus
+- advertisements
+- loans
+- deposits
+- cards
+- calculators
+- repeated sections
+- long website content
+
+IGNORE EVERYTHING except currency exchange rates.
 
 SUPPORTED CURRENCIES:
 USD
@@ -219,24 +233,31 @@ RUB
 CNY
 KZT
 
-IMPORTANT RULES:
+VERY IMPORTANT RULES:
 
 1. Return ONLY valid JSON.
 2. No markdown.
-3. No explanation.
+3. No explanations.
 4. No comments.
-5. If currency not found:
+5. No extra text.
+6. Never invent values.
+7. Search carefully through ALL text.
+8. Exchange rates may appear in tables.
+9. Buy/sell values may appear in any order.
+10. Extract REAL values only.
+
+RULES:
+
+- If currency not found:
 buy = "0.0000"
 sell = "0.0000"
 
-6. If ONLY ONE rate exists:
-buy = existing rate
+- If ONLY ONE value exists:
+buy = existing value
 sell = "0.0000"
 
-7. If BOTH buy and sell exist:
-use real values.
-
-8. Never invent values.
+- If BOTH values exist:
+use real buy/sell values.
 
 OUTPUT FORMAT:
 
@@ -263,19 +284,20 @@ OUTPUT FORMAT:
   }}
 }}
 
-TEXT:
-{markdown[:12000]}
+WEBSITE TEXT:
+
+{markdown[:15000]}
 """
 
     # ==========================
-    # AI REQUEST WITH INFINITE RETRY
+    # AI REQUEST
     # ==========================
 
     content = None
 
-    while True:
+    for attempt in range(5):
 
-        print("\nTRYING AI REQUEST...")
+        print(f"\nAI ATTEMPT: {attempt + 1}")
 
         try:
 
@@ -304,13 +326,29 @@ TEXT:
             print(json.dumps(ai_data, ensure_ascii=False, indent=2))
 
             # ==========================
-            # CHECK RESPONSE
+            # CHECK ERRORS
+            # ==========================
+
+            if "error" in ai_data:
+
+                print("API ERROR:", ai_data["error"]["message"])
+
+                if ai_data["error"]["code"] == 429:
+
+                    print("RATE LIMIT HIT")
+                    break
+
+                time.sleep(10)
+                continue
+
+            # ==========================
+            # CHECK CHOICES
             # ==========================
 
             if "choices" not in ai_data:
 
                 print("NO CHOICES FOUND")
-                print("WAITING 10 SECONDS...")
+
                 time.sleep(10)
                 continue
 
@@ -338,9 +376,16 @@ TEXT:
 
             print("AI ERROR:", e)
 
-            print("RETRY AFTER 10 SECONDS")
-
             time.sleep(10)
+
+    # ==========================
+    # FINAL CHECK
+    # ==========================
+
+    if not content:
+
+        print("FAILED TO EXTRACT")
+        continue
 
     # ==========================
     # PARSE JSON
@@ -369,7 +414,7 @@ TEXT:
     print("BANK ADDED SUCCESSFULLY")
 
     # ==========================
-    # WAIT BETWEEN BANKS
+    # WAIT
     # ==========================
 
     print("WAITING 3 SECONDS...\n")
