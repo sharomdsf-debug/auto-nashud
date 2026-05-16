@@ -17,11 +17,6 @@ OPENROUTER_API = os.getenv("OPENROUTER_API")
 
 banks = [
     {
-        "name": "Тавҳидбонк",
-        "id": "tawhidbank",
-        "website": "https://www.tawhidbank.tj/"
-    },
-    {
         "name": "Бонки Миллии Тоҷикистон",
         "id": "nbt",
         "website": "https://nbt.tj/"
@@ -30,6 +25,81 @@ banks = [
         "name": "Амонатбонк",
         "id": "amonatbonk",
         "website": "https://amonatbonk.tj/"
+    },
+    {
+        "name": "Ориёнбонк",
+        "id": "oriyonbank",
+        "website": "https://oriyonbonk.tj/"
+    },
+    {
+        "name": "Тавҳидбонк",
+        "id": "tawhidbank",
+        "website": "https://www.tawhidbank.tj/"
+    },
+    {
+        "name": "Бонки Эсхата",
+        "id": "eskhata",
+        "website": "https://eskhata.com/"
+    },
+    {
+        "name": "Коммерсбонк",
+        "id": "cbt",
+        "website": "https://cbt.tj/"
+    },
+    {
+        "name": "Тиҷорат Бонк",
+        "id": "tijoratbank",
+        "website": "https://tijoratbank.tj/"
+    },
+    {
+        "name": "Спитамен Бонк",
+        "id": "spitamenbank",
+        "website": "https://spitamenbank.tj/"
+    },
+    {
+        "name": "Имон Интернешнл Банк",
+        "id": "imon",
+        "website": "https://imon.tj/"
+    },
+    {
+        "name": "Душанбе Сити",
+        "id": "dc",
+        "website": "https://dc.tj/"
+    },
+    {
+        "name": "Алиф Бонк",
+        "id": "alif",
+        "website": "https://alif.tj/"
+    },
+    {
+        "name": "Саноатсодиротбонк",
+        "id": "ssb",
+        "website": "https://ssb.tj/"
+    },
+    {
+        "name": "IBT",
+        "id": "ibt",
+        "website": "https://ibt.tj/"
+    },
+    {
+        "name": "ICB",
+        "id": "icb",
+        "website": "https://icb.tj/"
+    },
+    {
+        "name": "Микрофинансбонк",
+        "id": "mfb",
+        "website": "https://mfb.tj/"
+    },
+    {
+        "name": "Бонки рушди Тоҷикистон",
+        "id": "brt",
+        "website": "https://brt.tj/"
+    },
+    {
+        "name": "Ҳумо",
+        "id": "humo",
+        "website": "https://humo.tj/"
     },
     {
         "name": "Арванд",
