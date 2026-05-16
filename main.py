@@ -87,7 +87,7 @@ final_json = {
 for bank in banks:
 
     print("\n============================")
-    print("Checking:", bank["website"])
+    print("CHECKING:", bank["website"])
 
     # ==========================
     # FIRECRAWL SCRAPE
@@ -106,7 +106,7 @@ for bank in banks:
                 "formats": ["markdown"],
                 "waitFor": 10000
             },
-            timeout=30
+            timeout=60
         )
 
         data = response.json()
@@ -194,18 +194,18 @@ OUTPUT FORMAT:
 }}
 
 TEXT:
-{markdown[:5000]}
+{markdown[:12000]}
 """
 
     # ==========================
-    # AI REQUEST WITH RETRY
+    # AI REQUEST WITH INFINITE RETRY
     # ==========================
 
     content = None
 
-    for attempt in range(3):
+    while True:
 
-        print(f"\nAI ATTEMPT: {attempt + 1}")
+        print("\nTRYING AI REQUEST...")
 
         try:
 
@@ -225,7 +225,7 @@ TEXT:
                     ],
                     "temperature": 0
                 },
-                timeout=30
+                timeout=60
             )
 
             ai_data = ai_response.json()
@@ -240,7 +240,8 @@ TEXT:
             if "choices" not in ai_data:
 
                 print("NO CHOICES FOUND")
-                time.sleep(5)
+                print("WAITING 10 SECONDS...")
+                time.sleep(10)
                 continue
 
             content = ai_data["choices"][0]["message"]["content"]
@@ -253,22 +254,23 @@ TEXT:
             content = content.replace("```", "")
             content = content.strip()
 
+            # ==========================
+            # TEST JSON
+            # ==========================
+
+            test_json = json.loads(content)
+
+            print("VALID JSON RECEIVED")
+
             break
 
         except Exception as e:
 
             print("AI ERROR:", e)
 
-            time.sleep(5)
+            print("RETRY AFTER 10 SECONDS")
 
-    # ==========================
-    # FINAL CHECK
-    # ==========================
-
-    if not content:
-
-        print("FAILED AFTER 3 ATTEMPTS")
-        continue
+            time.sleep(10)
 
     # ==========================
     # PARSE JSON
@@ -294,11 +296,15 @@ TEXT:
         "currencies": currencies
     })
 
+    print("BANK ADDED SUCCESSFULLY")
+
     # ==========================
-    # WAIT
+    # WAIT BETWEEN BANKS
     # ==========================
 
-    time.sleep(2)
+    print("WAITING 3 SECONDS...\n")
+
+    time.sleep(3)
 
 # ==============================
 # SAVE JSON
