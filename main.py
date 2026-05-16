@@ -1,6 +1,7 @@
 import requests
 import os
 import json
+import time
 from datetime import datetime
 
 # ==============================
@@ -193,45 +194,80 @@ OUTPUT FORMAT:
 }}
 
 TEXT:
-{markdown[:12000]}
+{markdown[:5000]}
 """
 
     # ==========================
-    # AI REQUEST
+    # AI REQUEST WITH RETRY
     # ==========================
 
-    try:
+    content = None
 
-        ai_response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {OPENROUTER_API}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "deepseek/deepseek-v4-flash:free",
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                "temperature": 0
-            },
-            timeout=30
-        )
+    for attempt in range(3):
 
-        ai_data = ai_response.json()
+        print(f"\nAI ATTEMPT: {attempt + 1}")
 
-        print("\n========== AI RESPONSE ==========\n")
+        try:
 
-        print(json.dumps(ai_data, ensure_ascii=False, indent=2))
+            ai_response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {OPENROUTER_API}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "deepseek/deepseek-v4-flash:free",
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    "temperature": 0
+                },
+                timeout=30
+            )
 
-        content = ai_data["choices"][0]["message"]["content"]
+            ai_data = ai_response.json()
 
-    except Exception as e:
+            print("\n========== AI RESPONSE ==========\n")
+            print(json.dumps(ai_data, ensure_ascii=False, indent=2))
 
-        print("AI ERROR:", e)
+            # ==========================
+            # CHECK RESPONSE
+            # ==========================
+
+            if "choices" not in ai_data:
+
+                print("NO CHOICES FOUND")
+                time.sleep(5)
+                continue
+
+            content = ai_data["choices"][0]["message"]["content"]
+
+            # ==========================
+            # CLEAN JSON
+            # ==========================
+
+            content = content.replace("```json", "")
+            content = content.replace("```", "")
+            content = content.strip()
+
+            break
+
+        except Exception as e:
+
+            print("AI ERROR:", e)
+
+            time.sleep(5)
+
+    # ==========================
+    # FINAL CHECK
+    # ==========================
+
+    if not content:
+
+        print("FAILED AFTER 3 ATTEMPTS")
         continue
 
     # ==========================
@@ -257,6 +293,12 @@ TEXT:
         "website": bank["website"],
         "currencies": currencies
     })
+
+    # ==========================
+    # WAIT
+    # ==========================
+
+    time.sleep(2)
 
 # ==============================
 # SAVE JSON
