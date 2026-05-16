@@ -3,38 +3,155 @@ import os
 import json
 from datetime import datetime
 
-# ==============================
+# ======================================
 # API KEYS
-# ==============================
+# ======================================
 
 FIRECRAWL_API = os.getenv("FIRECRAWL_API")
 OPENROUTER_API = os.getenv("OPENROUTER_API")
 
-# ==============================
+# ======================================
 # BANKS
-# ==============================
+# ======================================
 
 banks = [
     {
-        "name": "Тавҳидбонк",
-        "id": "tawhidbank",
-        "website": "https://www.tawhidbank.tj/"
-    },
-    {
         "name": "Бонки Миллии Тоҷикистон",
         "id": "nbt",
-        "website": "https://nbt.tj/"
+        "website": "https://nbt.tj"
     },
     {
         "name": "Амонатбонк",
         "id": "amonatbonk",
-        "website": "https://amonatbonk.tj/"
+        "website": "https://amonatbonk.tj"
+    },
+    {
+        "name": "Ориёнбонк",
+        "id": "oriyonbank",
+        "website": "https://oriyonbonk.tj"
+    },
+    {
+        "name": "Тавҳидбонк",
+        "id": "tawhid",
+        "website": "https://www.tawhidbank.tj"
+    },
+    {
+        "name": "Бонки Эсхата",
+        "id": "eskhata",
+        "website": "https://eskhata.com"
+    },
+    {
+        "name": "Коммерсбонк",
+        "id": "commerce",
+        "website": "https://cbt.tj"
+    },
+    {
+        "name": "Тиҷорат Бонк",
+        "id": "tijorat",
+        "website": "https://tijoratbank.tj"
+    },
+    {
+        "name": "Спитамен Бонк",
+        "id": "spitamen",
+        "website": "https://spitamenbank.tj"
+    },
+    {
+        "name": "Имон Интернешнл Банк",
+        "id": "imon",
+        "website": "https://imon.tj"
+    },
+    {
+        "name": "Душанбе Сити",
+        "id": "dushanbe_city",
+        "website": "https://dc.tj"
+    },
+    {
+        "name": "Алиф Бонк",
+        "id": "alif",
+        "website": "https://alif.tj"
+    },
+    {
+        "name": "Саноатсодиротбонк",
+        "id": "ssb",
+        "website": "https://ssb.tj"
+    },
+    {
+        "name": "IBT",
+        "id": "ibt",
+        "website": "https://ibt.tj"
+    },
+    {
+        "name": "ICB",
+        "id": "icb",
+        "website": "https://icb.tj"
+    },
+    {
+        "name": "Микрофинансбонк",
+        "id": "mfb",
+        "website": "https://mfb.tj"
+    },
+    {
+        "name": "Бонки рушди Тоҷикистон",
+        "id": "sdb",
+        "website": "https://brt.tj"
+    },
+    {
+        "name": "Ҳумо",
+        "id": "humo",
+        "website": "https://humo.tj"
+    },
+    {
+        "name": "Арванд",
+        "id": "arvand",
+        "website": "https://arvand.tj"
+    },
+    {
+        "name": "FINCA",
+        "id": "finca",
+        "website": "https://finca.tj"
+    },
+    {
+        "name": "Фридом Бонк Тоҷикистон",
+        "id": "freedom",
+        "website": "https://freedombank.tj"
+    },
+    {
+        "name": "Васл Бонк",
+        "id": "vasl",
+        "website": "https://vasl.tj"
+    },
+    {
+        "name": "Актив Бонк",
+        "id": "aktiv",
+        "website": "https://aktivbank.tj"
+    },
+    {
+        "name": "Азизи-Молия",
+        "id": "azizi",
+        "website": "https://azizimoliya.tj"
+    },
+    {
+        "name": "Матин",
+        "id": "matin",
+        "website": "https://matin.tj"
     }
 ]
 
-# ==============================
+# ======================================
+# DEFAULT CURRENCIES
+# ======================================
+
+EMPTY_CURRENCIES = {
+    "USD": {"buy": "0.0000", "sell": "0.0000"},
+    "EUR": {"buy": "0.0000", "sell": "0.0000"},
+    "RUB": {"buy": "0.0000", "sell": "0.0000"},
+    "CNY": {"buy": "0.0000", "sell": "0.0000"},
+    "KZT": {"buy": "0.0000", "sell": "0.0000"}
+}
+
+# ======================================
 # FINAL JSON
-# ==============================
+# ======================================
 
 final_json = {
     "project_name": "ASOR TJ",
@@ -44,20 +161,20 @@ final_json = {
     "rates": []
 }
 
-# ==============================
-# LOOP
-# ==============================
+# ======================================
+# LOOP BANKS
+# ======================================
 
 for bank in banks:
 
     print("\n============================")
     print("Checking:", bank["website"])
 
-    # ==========================
-    # FIRECRAWL SCRAPE
-    # ==========================
-
     try:
+
+        # ======================================
+        # FIRECRAWL
+        # ======================================
 
         response = requests.post(
             "https://api.firecrawl.dev/v1/scrape",
@@ -68,43 +185,49 @@ for bank in banks:
             json={
                 "url": bank["website"],
                 "formats": ["markdown"],
-                "waitFor": 10000
+                "waitFor": 300000
             },
-            timeout=30
+            timeout=300
         )
 
         data = response.json()
 
-    except Exception as e:
+        if "data" not in data:
 
-        print("FIRECRAWL ERROR:", e)
-        continue
+            print("NO DATA")
 
-    # ==========================
-    # GET MARKDOWN
-    # ==========================
+            final_json["rates"].append({
+                "bank_name": bank["name"],
+                "bank_id": bank["id"],
+                "currencies": EMPTY_CURRENCIES
+            })
 
-    markdown = ""
+            continue
 
-    if "data" in data and "markdown" in data["data"]:
+        markdown = data["data"].get("markdown", "")
 
-        markdown = data["data"]["markdown"]
+        if not markdown:
+
+            print("NO MARKDOWN")
+
+            final_json["rates"].append({
+                "bank_name": bank["name"],
+                "bank_id": bank["id"],
+                "currencies": EMPTY_CURRENCIES
+            })
+
+            continue
 
         print("TEXT LOADED")
 
-    else:
+        # ======================================
+        # PROMPT
+        # ======================================
 
-        print("NO MARKDOWN")
-        continue
+        prompt = f"""
+You are an AI banking exchange-rate extraction system.
 
-    # ==========================
-    # AI PROMPT
-    # ==========================
-
-    prompt = f"""
-You are an AI currency extraction system.
-
-Extract ONLY exchange rates from the text.
+Extract ONLY currency exchange rates from the markdown.
 
 SUPPORTED CURRENCIES:
 USD
@@ -113,59 +236,45 @@ RUB
 CNY
 KZT
 
-IMPORTANT RULES:
+VERY IMPORTANT RULES:
 
 1. Return ONLY valid JSON.
 2. No markdown.
 3. No explanation.
 4. No comments.
-5. If currency not found:
+5. No text before JSON.
+6. No text after JSON.
+7. Never invent values.
+8. If currency missing:
 buy = "0.0000"
 sell = "0.0000"
 
-6. If ONLY ONE rate exists:
-buy = existing rate
-sell = "0.0000"
+9. If ONLY ONE rate exists:
+use:
+"buy" = existing rate
+"sell" = "0.0000"
 
-7. If BOTH buy and sell exist:
-use real values.
-
-8. Never invent values.
-
-OUTPUT FORMAT:
+10. JSON MUST match EXACTLY this structure:
 
 {{
-  "USD": {{
-    "buy": "0.0000",
-    "sell": "0.0000"
-  }},
-  "EUR": {{
-    "buy": "0.0000",
-    "sell": "0.0000"
-  }},
-  "RUB": {{
-    "buy": "0.0000",
-    "sell": "0.0000"
-  }},
-  "CNY": {{
-    "buy": "0.0000",
-    "sell": "0.0000"
-  }},
-  "KZT": {{
-    "buy": "0.0000",
-    "sell": "0.0000"
+  "bank_name": "{bank['name']}",
+  "bank_id": "{bank['id']}",
+  "currencies": {{
+    "USD": {{"buy":"0.0000","sell":"0.0000"}},
+    "EUR": {{"buy":"0.0000","sell":"0.0000"}},
+    "RUB": {{"buy":"0.0000","sell":"0.0000"}},
+    "CNY": {{"buy":"0.0000","sell":"0.0000"}},
+    "KZT": {{"buy":"0.0000","sell":"0.0000"}}
   }}
 }}
 
-TEXT:
-{markdown[:12000]}
+MARKDOWN:
+{markdown[:30000]}
 """
 
-    # ==========================
-    # AI REQUEST
-    # ==========================
-
-    try:
+        # ======================================
+        # AI REQUEST
+        # ======================================
 
         ai_response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
@@ -183,60 +292,40 @@ TEXT:
                 ],
                 "temperature": 0
             },
-            timeout=30
+            timeout=60
         )
 
         ai_data = ai_response.json()
 
-        print("\n========== AI RESPONSE ==========\n")
-
+        print("\n========== AI RESPONSE ==========")
         print(json.dumps(ai_data, ensure_ascii=False, indent=2))
 
         content = ai_data["choices"][0]["message"]["content"]
 
-    except Exception as e:
+        parsed = json.loads(content)
 
-        print("AI ERROR:", e)
-        continue
+        final_json["rates"].append(parsed)
 
-    # ==========================
-    # PARSE JSON
-    # ==========================
-
-    try:
-
-        currencies = json.loads(content)
+        print("BANK ADDED")
 
     except Exception as e:
 
-        print("JSON ERROR:", e)
-        continue
+        print("ERROR:", str(e))
 
-    # ==========================
-    # ADD BANK
-    # ==========================
+        final_json["rates"].append({
+            "bank_name": bank["name"],
+            "bank_id": bank["id"],
+            "currencies": EMPTY_CURRENCIES
+        })
 
-    final_json["rates"].append({
-        "bank_name": bank["name"],
-        "bank_id": bank["id"],
-        "website": bank["website"],
-        "currencies": currencies
-    })
-
-# ==============================
+# ======================================
 # SAVE JSON
-# ==============================
+# ======================================
 
 with open("data.json", "w", encoding="utf-8") as f:
-
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
-# ==============================
-# PRINT FINAL JSON
-# ==============================
-
-print("\n========== FINAL JSON ==========\n")
-
+print("\n========== FINAL JSON ==========")
 print(json.dumps(final_json, ensure_ascii=False, indent=2))
 
 print("\nDATA SAVED TO data.json")
