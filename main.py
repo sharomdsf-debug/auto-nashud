@@ -11,7 +11,7 @@ FIRECRAWL_API = os.getenv("FIRECRAWL_API")
 OPENROUTER_API = os.getenv("OPENROUTER_API")
 
 # ==========================================
-# BANKS
+# BANKS (EASY WEBSITES)
 # ==========================================
 
 banks = [
@@ -26,39 +26,9 @@ banks = [
         "website": "https://amonatbonk.tj"
     },
     {
-        "name": "Ориёнбонк",
-        "id": "oriyonbank",
-        "website": "https://oriyonbonk.tj"
-    },
-    {
         "name": "Тавҳидбонк",
         "id": "tawhid",
         "website": "https://www.tawhidbank.tj"
-    },
-    {
-        "name": "Бонки Эсхата",
-        "id": "eskhata",
-        "website": "https://eskhata.com"
-    },
-    {
-        "name": "Коммерсбонк",
-        "id": "commerce",
-        "website": "https://cbt.tj"
-    },
-    {
-        "name": "Тиҷорат Бонк",
-        "id": "tijorat",
-        "website": "https://tijoratbank.tj"
-    },
-    {
-        "name": "Спитамен Бонк",
-        "id": "spitamen",
-        "website": "https://spitamenbank.tj"
-    },
-    {
-        "name": "Имон Интернешнл Банк",
-        "id": "imon",
-        "website": "https://imon.tj"
     },
     {
         "name": "Душанбе Сити",
@@ -66,74 +36,9 @@ banks = [
         "website": "https://dc.tj"
     },
     {
-        "name": "Алиф Бонк",
-        "id": "alif",
-        "website": "https://alif.tj"
-    },
-    {
-        "name": "Саноатсодиротбонк",
-        "id": "ssb",
-        "website": "https://ssb.tj"
-    },
-    {
         "name": "IBT",
         "id": "ibt",
         "website": "https://ibt.tj"
-    },
-    {
-        "name": "ICB",
-        "id": "icb",
-        "website": "https://icb.tj"
-    },
-    {
-        "name": "Микрофинансбонк",
-        "id": "mfb",
-        "website": "https://mfb.tj"
-    },
-    {
-        "name": "Бонки рушди Тоҷикистон",
-        "id": "sdb",
-        "website": "https://brt.tj"
-    },
-    {
-        "name": "Ҳумо",
-        "id": "humo",
-        "website": "https://humo.tj"
-    },
-    {
-        "name": "Арванд",
-        "id": "arvand",
-        "website": "https://arvand.tj"
-    },
-    {
-        "name": "FINCA",
-        "id": "finca",
-        "website": "https://finca.tj"
-    },
-    {
-        "name": "Фридом Бонк Тоҷикистон",
-        "id": "freedom",
-        "website": "https://freedombank.tj"
-    },
-    {
-        "name": "Васл Бонк",
-        "id": "vasl",
-        "website": "https://vasl.tj"
-    },
-    {
-        "name": "Актив Бонк",
-        "id": "aktiv",
-        "website": "https://aktivbank.tj"
-    },
-    {
-        "name": "Азизи-Молия",
-        "id": "azizi",
-        "website": "https://azizimoliya.tj"
-    },
-    {
-        "name": "Матин",
-        "id": "matin",
-        "website": "https://matin.tj"
     }
 ]
 
@@ -188,15 +93,15 @@ for bank in banks:
                 "url": bank["website"],
                 "formats": ["markdown"],
                 "onlyMainContent": False,
-                "waitFor": 300000
+                "waitFor": 10000
             },
-            timeout=300
+            timeout=60
         )
 
         data = response.json()
 
-        print("\nFIRECRAWL RESPONSE:\n")
-        print(json.dumps(data, ensure_ascii=False, indent=2)[:3000])
+        print("\n========== FIRECRAWL ==========\n")
+        print(json.dumps(data, ensure_ascii=False, indent=2)[:2000])
 
     except Exception as e:
 
@@ -239,7 +144,7 @@ for bank in banks:
     prompt = f"""
 You are an AI currency extraction system.
 
-Extract ONLY exchange rates from the website text.
+Extract ONLY exchange rates from website text.
 
 SUPPORTED CURRENCIES:
 USD
@@ -250,22 +155,22 @@ KZT
 
 IMPORTANT RULES:
 
-1. Return ONLY VALID JSON.
-2. No markdown.
-3. No explanation.
-4. No comments.
-5. No extra text.
-6. Never invent values.
-7. If currency not found:
+1. Return ONLY VALID JSON
+2. No markdown
+3. No explanation
+4. No comments
+5. Never invent values
+
+6. If currency not found:
 buy = "0.0000"
 sell = "0.0000"
 
-8. If ONLY ONE rate exists:
+7. If ONLY ONE rate exists:
 buy = rate
 sell = "0.0000"
 
-9. If BOTH buy and sell exist:
-use real values.
+8. If BOTH buy and sell exist:
+use real values
 
 OUTPUT FORMAT:
 
@@ -343,7 +248,7 @@ TEXT:
         continue
 
     # ======================================
-    # PARSE JSON
+    # JSON PARSE
     # ======================================
 
     try:
@@ -357,7 +262,7 @@ TEXT:
         currencies = EMPTY_CURRENCIES
 
     # ======================================
-    # ADD BANK
+    # ADD TO FINAL JSON
     # ======================================
 
     final_json["rates"].append({
