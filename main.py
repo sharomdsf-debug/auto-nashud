@@ -48,8 +48,8 @@ banks = [
     },
     {
         "name": "Тиҷорат Бонк",
-        "id": "tijoratbank",
-        "website": "https://tijoratbank.tj/"
+        "id": "tejaratbank",
+        "website": "https://tejaratbank.tj/"
     },
     {
         "name": "Спитамен Бонк",
@@ -139,6 +139,12 @@ banks = [
 ]
 
 # ==============================
+# FAILED BANKS
+# ==============================
+
+failed_banks = []
+
+# ==============================
 # FINAL JSON
 # ==============================
 
@@ -160,7 +166,7 @@ for bank in banks:
     print("CHECKING:", bank["website"])
 
     # ==========================
-    # FIRECRAWL SCRAPE
+    # FIRECRAWL REQUEST
     # ==========================
 
     try:
@@ -174,7 +180,7 @@ for bank in banks:
             json={
                 "url": bank["website"],
                 "formats": ["markdown"],
-                "waitFor": 10000
+                "waitFor": 15000
             },
             timeout=60
         )
@@ -184,6 +190,13 @@ for bank in banks:
     except Exception as e:
 
         print("FIRECRAWL ERROR:", e)
+
+        failed_banks.append({
+            "bank": bank["name"],
+            "website": bank["website"],
+            "reason": str(e)
+        })
+
         continue
 
     # ==========================
@@ -201,30 +214,37 @@ for bank in banks:
     else:
 
         print("NO MARKDOWN")
+
+        failed_banks.append({
+            "bank": bank["name"],
+            "website": bank["website"],
+            "reason": "NO MARKDOWN"
+        })
+
         continue
 
     # ==========================
-    # AI PROMPT
+    # PROMPT
     # ==========================
 
     prompt = f"""
-You are a professional AI financial data extraction system.
+You are a professional currency extraction AI.
 
-Your ONLY task is to extract currency exchange rates from website text.
+Your task:
+Extract ONLY real exchange rates from the text.
 
 IMPORTANT:
 
-The text may contain:
-- menus
-- advertisements
-- loans
-- deposits
-- cards
-- calculators
-- repeated sections
-- long website content
-
-IGNORE EVERYTHING except currency exchange rates.
+1. Return ONLY VALID JSON.
+2. No markdown.
+3. No explanations.
+4. No comments.
+5. No extra text.
+6. Never invent values.
+7. Use ONLY rates found in text.
+8. If value not found:
+buy = "0.0000"
+sell = "0.0000"
 
 SUPPORTED CURRENCIES:
 USD
@@ -232,32 +252,6 @@ EUR
 RUB
 CNY
 KZT
-
-VERY IMPORTANT RULES:
-
-1. Return ONLY valid JSON.
-2. No markdown.
-3. No explanations.
-4. No comments.
-5. No extra text.
-6. Never invent values.
-7. Search carefully through ALL text.
-8. Exchange rates may appear in tables.
-9. Buy/sell values may appear in any order.
-10. Extract REAL values only.
-
-RULES:
-
-- If currency not found:
-buy = "0.0000"
-sell = "0.0000"
-
-- If ONLY ONE value exists:
-buy = existing value
-sell = "0.0000"
-
-- If BOTH values exist:
-use real buy/sell values.
 
 OUTPUT FORMAT:
 
@@ -284,20 +278,19 @@ OUTPUT FORMAT:
   }}
 }}
 
-WEBSITE TEXT:
-
-{markdown[:15000]}
+TEXT:
+{markdown[:20000]}
 """
 
     # ==========================
-    # AI REQUEST
+    # AI RETRIES
     # ==========================
 
-    content = None
+    currencies = None
 
     for attempt in range(5):
 
-        print(f"\nAI ATTEMPT: {attempt + 1}")
+        print(f"AI TRY {attempt + 1}/5")
 
         try:
 
@@ -308,7 +301,7 @@ WEBSITE TEXT:
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "deepseek/deepseek-v4-flash:free",
+                    "model": "nvidia/nemotron-3-super-120b-a12b:free",
                     "messages": [
                         {
                             "role": "user",
@@ -317,56 +310,23 @@ WEBSITE TEXT:
                     ],
                     "temperature": 0
                 },
-                timeout=60
+                timeout=120
             )
 
             ai_data = ai_response.json()
 
-            print("\n========== AI RESPONSE ==========\n")
+            print("========== AI RESPONSE ==========")
             print(json.dumps(ai_data, ensure_ascii=False, indent=2))
-
-            # ==========================
-            # CHECK ERRORS
-            # ==========================
-
-            if "error" in ai_data:
-
-                print("API ERROR:", ai_data["error"]["message"])
-
-                if ai_data["error"]["code"] == 429:
-
-                    print("RATE LIMIT HIT")
-                    break
-
-                time.sleep(10)
-                continue
-
-            # ==========================
-            # CHECK CHOICES
-            # ==========================
 
             if "choices" not in ai_data:
 
                 print("NO CHOICES FOUND")
-
                 time.sleep(10)
                 continue
 
             content = ai_data["choices"][0]["message"]["content"]
 
-            # ==========================
-            # CLEAN JSON
-            # ==========================
-
-            content = content.replace("```json", "")
-            content = content.replace("```", "")
-            content = content.strip()
-
-            # ==========================
-            # TEST JSON
-            # ==========================
-
-            test_json = json.loads(content)
+            currencies = json.loads(content)
 
             print("VALID JSON RECEIVED")
 
@@ -375,33 +335,24 @@ WEBSITE TEXT:
         except Exception as e:
 
             print("AI ERROR:", e)
-
             time.sleep(10)
 
     # ==========================
-    # FINAL CHECK
+    # FAILED AI
     # ==========================
 
-    if not content:
+    if currencies is None:
 
-        print("FAILED TO EXTRACT")
+        failed_banks.append({
+            "bank": bank["name"],
+            "website": bank["website"],
+            "reason": "AI FAILED"
+        })
+
         continue
 
     # ==========================
-    # PARSE JSON
-    # ==========================
-
-    try:
-
-        currencies = json.loads(content)
-
-    except Exception as e:
-
-        print("JSON ERROR:", e)
-        continue
-
-    # ==========================
-    # ADD BANK
+    # SAVE BANK
     # ==========================
 
     final_json["rates"].append({
@@ -412,12 +363,6 @@ WEBSITE TEXT:
     })
 
     print("BANK ADDED SUCCESSFULLY")
-
-    # ==========================
-    # WAIT
-    # ==========================
-
-    print("WAITING 3 SECONDS...\n")
 
     time.sleep(3)
 
@@ -430,11 +375,24 @@ with open("data.json", "w", encoding="utf-8") as f:
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
 # ==============================
-# PRINT FINAL JSON
+# SAVE FAILED
+# ==============================
+
+with open("failed_banks.json", "w", encoding="utf-8") as f:
+
+    json.dump(failed_banks, f, ensure_ascii=False, indent=2)
+
+# ==============================
+# FINAL PRINT
 # ==============================
 
 print("\n========== FINAL JSON ==========\n")
 
 print(json.dumps(final_json, ensure_ascii=False, indent=2))
 
+print("\n========== FAILED BANKS ==========\n")
+
+print(json.dumps(failed_banks, ensure_ascii=False, indent=2))
+
 print("\nDATA SAVED TO data.json")
+print("FAILED BANKS SAVED TO failed_banks.json")
