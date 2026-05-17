@@ -2,8 +2,8 @@ import requests
 import os
 import json
 import time
-import re
 import copy
+import re
 from datetime import datetime
 
 # =========================================================
@@ -58,16 +58,7 @@ ALL_BANKS = [
 # SPLIT INTO 8 PARTS
 # =========================================================
 
-PARTS = [
-    ALL_BANKS[0:3],
-    ALL_BANKS[3:6],
-    ALL_BANKS[6:9],
-    ALL_BANKS[9:12],
-    ALL_BANKS[12:15],
-    ALL_BANKS[15:18],
-    ALL_BANKS[18:21],
-    ALL_BANKS[21:24]
-]
+PARTS = [ALL_BANKS[i:i+3] for i in range(0, len(ALL_BANKS), 3)]
 
 # =========================================================
 # VALIDATION
@@ -84,38 +75,20 @@ VALID_RANGES = {
 CURRENCIES = list(VALID_RANGES.keys())
 
 EMPTY = {
-    c: {
-        "buy": "0.0000",
-        "sell": "0.0000"
-    }
+    c: {"buy": "0.0000", "sell": "0.0000"}
     for c in CURRENCIES
 }
-
-# =========================================================
-# KEYWORDS
-# =========================================================
-
-KEYWORDS = [
-    "usd", "eur", "rub", "cny", "kzt",
-    "курс", "қурб", "валют", "асъор",
-    "exchange", "currency",
-    "харид", "фурӯш",
-    "buy", "sell",
-    "покупка", "продажа"
-]
 
 # =========================================================
 # HELPERS
 # =========================================================
 
-def validate_value(currency, value):
+def validate(currency, value):
     try:
-        value = str(value).replace(",", ".").strip()
-        num = float(value)
+        num = float(str(value).replace(",", "."))
+        lo, hi = VALID_RANGES[currency]
 
-        low, high = VALID_RANGES[currency]
-
-        if low <= num <= high:
+        if lo <= num <= hi:
             return f"{num:.4f}"
 
         return "0.0000"
@@ -124,106 +97,61 @@ def validate_value(currency, value):
         return "0.0000"
 
 
-def clean_ai_json(data):
+def clean_json(data):
     result = copy.deepcopy(EMPTY)
 
-    for currency in CURRENCIES:
+    for cur in CURRENCIES:
 
-        if currency not in data:
+        if cur not in data:
             continue
 
-        result[currency]["buy"] = validate_value(
-            currency,
-            data[currency].get("buy", "0")
+        result[cur]["buy"] = validate(
+            cur,
+            data[cur].get("buy", "0")
         )
 
-        result[currency]["sell"] = validate_value(
-            currency,
-            data[currency].get("sell", "0")
+        result[cur]["sell"] = validate(
+            cur,
+            data[cur].get("sell", "0")
         )
 
     return result
 
 
-def merge_currencies(base, extra):
+def merge(base, extra):
 
     result = copy.deepcopy(base)
 
-    for currency in CURRENCIES:
+    for cur in CURRENCIES:
 
         if (
-            result[currency]["buy"] == "0.0000"
-            and extra[currency]["buy"] != "0.0000"
+            result[cur]["buy"] == "0.0000"
+            and extra[cur]["buy"] != "0.0000"
         ):
-            result[currency]["buy"] = extra[currency]["buy"]
+            result[cur]["buy"] = extra[cur]["buy"]
 
         if (
-            result[currency]["sell"] == "0.0000"
-            and extra[currency]["sell"] != "0.0000"
+            result[cur]["sell"] == "0.0000"
+            and extra[cur]["sell"] != "0.0000"
         ):
-            result[currency]["sell"] = extra[currency]["sell"]
+            result[cur]["sell"] = extra[cur]["sell"]
 
     return result
 
 
-def count_found(currencies):
+def count_found(data):
 
     total = 0
 
-    for currency in CURRENCIES:
+    for cur in CURRENCIES:
 
         if (
-            currencies[currency]["buy"] != "0.0000"
-            or currencies[currency]["sell"] != "0.0000"
+            data[cur]["buy"] != "0.0000"
+            or data[cur]["sell"] != "0.0000"
         ):
             total += 1
 
     return total
-
-
-# =========================================================
-# SMART CHUNKS
-# =========================================================
-
-CHUNK_SIZE = 40000
-OVERLAP = 4000
-MAX_CHUNKS = 5
-
-def build_chunks(markdown):
-
-    text = markdown.replace("\r", "\n")
-
-    chunks = []
-
-    step = CHUNK_SIZE - OVERLAP
-
-    for i in range(0, len(text), step):
-
-        chunk = text[i:i + CHUNK_SIZE]
-
-        lower = chunk.lower()
-
-        score = 0
-
-        for keyword in KEYWORDS:
-            score += lower.count(keyword)
-
-        chunks.append({
-            "score": score,
-            "text": chunk
-        })
-
-    chunks.sort(key=lambda x: x["score"], reverse=True)
-
-    final_chunks = []
-
-    for item in chunks[:MAX_CHUNKS]:
-        final_chunks.append(item["text"])
-
-    if not final_chunks:
-        final_chunks.append(text[:CHUNK_SIZE])
-
-    return final_chunks
 
 
 # =========================================================
@@ -255,7 +183,7 @@ def scrape(url):
 
         markdown = data.get("data", {}).get("markdown", "")
 
-        print(f"MARKDOWN SIZE: {len(markdown)}")
+        print(f"MARKDOWN: {len(markdown)} chars")
 
         return markdown
 
@@ -267,86 +195,39 @@ def scrape(url):
 
 
 # =========================================================
-# AI PROMPT
+# AI STAGE 1
+# FIND CURRENCY SECTION
 # =========================================================
 
-PROMPT = """
-Extract REAL bank currency exchange rates against TJS.
+SECTION_PROMPT = """
+You are extracting ONLY the currency exchange section from a bank website.
 
-VERY IMPORTANT:
+IMPORTANT:
+- Return ONLY raw text.
+- DO NOT summarize.
+- DO NOT explain.
+- DO NOT output JSON.
+- Find ONLY the part containing exchange rates.
+- Ignore menus, footer, contacts, news, loans, cards.
 
-ALL BANKS HAVE REAL EXCHANGE RATES.
-You must carefully search the website text and find them.
+The section MUST contain:
+USD, EUR, RUB, CNY or KZT.
 
-Currencies:
-USD
-EUR
-RUB
-CNY
-KZT
+Return maximum 2500 characters.
 
-Rules:
-
-- Return ONLY valid JSON.
-- No markdown.
-- No explanations.
-- Use ONLY numbers found in the text.
-- Never invent values.
-- Ignore:
-  phone numbers,
-  years,
-  loan percentages,
-  deposit percentages,
-  card limits,
-  menu numbers.
-
-VALID RANGES:
-
-USD: 8.0 - 12.0
-EUR: 8.0 - 14.0
-RUB: 0.08 - 0.25
-CNY: 1.0 - 2.5
-KZT: 0.010 - 0.060
-
-VERY IMPORTANT:
-
-- If currency truly not found:
-  buy = "0.0000"
-  sell = "0.0000"
-
-- If only one value exists:
-  put it into buy
-  sell = "0.0000"
-
-- NEVER copy values from another currency.
-
-STRICT JSON FORMAT:
-
-{
-  "USD": {"buy":"0.0000","sell":"0.0000"},
-  "EUR": {"buy":"0.0000","sell":"0.0000"},
-  "RUB": {"buy":"0.0000","sell":"0.0000"},
-  "CNY": {"buy":"0.0000","sell":"0.0000"},
-  "KZT": {"buy":"0.0000","sell":"0.0000"}
-}
-
-WEBSITE TEXT:
+TEXT:
 """
 
 
-# =========================================================
-# AI CALL
-# =========================================================
+def find_currency_section(markdown):
 
-def ask_ai(chunk):
+    markdown = markdown[:40000]
 
     for model in MODELS:
 
-        print(f"\nMODEL: {model}")
+        print(f"\nSECTION MODEL: {model}")
 
-        for attempt in range(3):
-
-            print(f"TRY {attempt + 1}/3")
+        for attempt in range(2):
 
             try:
 
@@ -361,7 +242,101 @@ def ask_ai(chunk):
                         "messages": [
                             {
                                 "role": "user",
-                                "content": PROMPT + chunk
+                                "content": SECTION_PROMPT + markdown
+                            }
+                        ],
+                        "temperature": 0,
+                        "max_tokens": 1200
+                    },
+                    timeout=180
+                )
+
+                data = response.json()
+
+                if "choices" not in data:
+                    continue
+
+                text = data["choices"][0]["message"]["content"]
+
+                if len(text) > 100:
+                    print("SECTION FOUND")
+                    return text
+
+            except Exception as e:
+
+                print("SECTION ERROR:", e)
+
+            time.sleep(5)
+
+    return markdown[:2500]
+
+
+# =========================================================
+# AI STAGE 2
+# EXTRACT JSON
+# =========================================================
+
+JSON_PROMPT = """
+Extract REAL bank exchange rates against TJS.
+
+STRICT RULES:
+- Return ONLY JSON.
+- Never explain.
+- Never add markdown.
+- Use ONLY numbers from the text.
+- Never invent values.
+- Ignore phone numbers, years, loan rates, percentages.
+
+IMPORTANT:
+- Some banks may have only BUY and no SELL.
+- If sell missing -> "0.0000"
+- If currency missing -> "0.0000"
+
+VALID RANGES:
+USD: 8-12
+EUR: 8-14
+RUB: 0.08-0.25
+CNY: 1-2.5
+KZT: 0.01-0.06
+
+OUTPUT FORMAT:
+
+{
+  "USD": {"buy":"0.0000","sell":"0.0000"},
+  "EUR": {"buy":"0.0000","sell":"0.0000"},
+  "RUB": {"buy":"0.0000","sell":"0.0000"},
+  "CNY": {"buy":"0.0000","sell":"0.0000"},
+  "KZT": {"buy":"0.0000","sell":"0.0000"}
+}
+
+TEXT:
+"""
+
+
+def extract_rates(text):
+
+    best = copy.deepcopy(EMPTY)
+
+    for model in MODELS:
+
+        print(f"\nEXTRACT MODEL: {model}")
+
+        for attempt in range(3):
+
+            try:
+
+                response = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {OPENROUTER_API}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": model,
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": JSON_PROMPT + text
                             }
                         ],
                         "temperature": 0,
@@ -373,41 +348,40 @@ def ask_ai(chunk):
                 data = response.json()
 
                 if "choices" not in data:
-                    print("NO CHOICES")
-                    time.sleep(10)
                     continue
 
-                content = data["choices"][0]["message"]["content"]
+                raw = data["choices"][0]["message"]["content"]
 
-                content = re.sub(r"```json", "", content)
-                content = re.sub(r"```", "", content).strip()
+                raw = raw.replace("```json", "")
+                raw = raw.replace("```", "")
 
-                start = content.find("{")
-                end = content.rfind("}") + 1
+                start = raw.find("{")
+                end = raw.rfind("}") + 1
 
                 if start == -1:
-                    raise Exception("JSON NOT FOUND")
+                    continue
 
-                content = content[start:end]
+                parsed = json.loads(raw[start:end])
 
-                parsed = json.loads(content)
-
-                cleaned = clean_ai_json(parsed)
+                cleaned = clean_json(parsed)
 
                 found = count_found(cleaned)
 
                 print(f"FOUND: {found}/5")
 
-                if found > 0:
+                if found > count_found(best):
+                    best = cleaned
+
+                if found >= 3:
                     return cleaned
 
             except Exception as e:
 
-                print("AI ERROR:", e)
+                print("EXTRACT ERROR:", e)
 
-            time.sleep(8)
+            time.sleep(5)
 
-    return copy.deepcopy(EMPTY)
+    return best
 
 
 # =========================================================
@@ -416,44 +390,36 @@ def ask_ai(chunk):
 
 def process_bank(bank):
 
-    print("\n" + "=" * 60)
+    print("\n" + "="*60)
     print(bank["name"])
-    print(bank["website"])
-    print("=" * 60)
+    print("="*60)
 
     markdown = scrape(bank["website"])
 
-    currencies = copy.deepcopy(EMPTY)
-
     if not markdown:
-
-        print("NO MARKDOWN")
 
         return {
             "bank_name": bank["name"],
             "bank_id": bank["id"],
             "website": bank["website"],
-            "currencies": currencies
+            "currencies": copy.deepcopy(EMPTY)
         }
 
-    chunks = build_chunks(markdown)
+    # ==========================
+    # STAGE 1
+    # ==========================
 
-    print(f"CHUNKS: {len(chunks)}")
+    section = find_currency_section(markdown)
 
-    for index, chunk in enumerate(chunks):
+    print(f"SECTION SIZE: {len(section)}")
 
-        print(f"\nCHUNK {index + 1}")
+    # ==========================
+    # STAGE 2
+    # ==========================
 
-        ai_result = ask_ai(chunk)
+    currencies = extract_rates(section)
 
-        currencies = merge_currencies(
-            currencies,
-            ai_result
-        )
-
-        print(f"TOTAL FOUND: {count_found(currencies)}/5")
-
-        time.sleep(3)
+    print(f"FINAL FOUND: {count_found(currencies)}/5")
 
     return {
         "bank_name": bank["name"],
@@ -475,9 +441,9 @@ def process_part(part, filename):
 
     for bank in part:
 
-        bank_data = process_bank(bank)
+        item = process_bank(bank)
 
-        result["rates"].append(bank_data)
+        result["rates"].append(item)
 
         time.sleep(5)
 
@@ -499,29 +465,26 @@ def process_part(part, filename):
 
 for index, part in enumerate(PARTS):
 
-    print("\n" + "#" * 70)
-    print(f"PART {index + 1}/{len(PARTS)}")
-    print("#" * 70)
+    print("\n" + "#"*70)
+    print(f"PART {index+1}/{len(PARTS)}")
+    print("#"*70)
 
     process_part(
         part,
-        f"part{index + 1}.json"
+        f"part{index+1}.json"
     )
 
-    if index < len(PARTS) - 1:
-
-        print("\nWAITING 20 SECONDS...\n")
-
+    if index < len(PARTS)-1:
         time.sleep(20)
 
 
 # =========================================================
-# MERGE JSON
+# MERGE
 # =========================================================
 
 all_rates = []
 
-for i in range(1, len(PARTS) + 1):
+for i in range(1, len(PARTS)+1):
 
     with open(f"part{i}.json", encoding="utf-8") as f:
 
@@ -530,7 +493,7 @@ for i in range(1, len(PARTS) + 1):
         all_rates.extend(data["rates"])
 
 
-final_json = {
+final = {
     "project_name": "ASOR TJ",
     "last_updated": "🔹" + datetime.now().strftime("%d.%m.%Y %H:%M"),
     "base_currency": "TJS",
@@ -541,11 +504,11 @@ final_json = {
 with open("data.json", "w", encoding="utf-8") as f:
 
     json.dump(
-        final_json,
+        final,
         f,
         ensure_ascii=False,
         indent=2
     )
 
 print("\nDONE")
-print(json.dumps(final_json, ensure_ascii=False, indent=2))
+print(json.dumps(final, ensure_ascii=False, indent=2))
