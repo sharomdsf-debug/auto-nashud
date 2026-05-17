@@ -238,9 +238,27 @@ def process_banks(bank_list, filename):
         if currencies is None:
 
             prompt = f"""
-You are a professional AI currency extraction system.
+You are an advanced AI currency extraction system.
 
-Extract ONLY real exchange rates.
+Your ONLY job is to extract REAL currency exchange rates from the website text.
+
+IMPORTANT:
+Search VERY CAREFULLY for currency tables near words:
+
+Курс валют
+Қурби асъор
+Exchange rates
+USD
+EUR
+RUB
+CNY
+KZT
+Покупка
+Продажа
+Харид
+Фурӯш
+Buy
+Sell
 
 SUPPORTED CURRENCIES:
 USD
@@ -249,31 +267,73 @@ RUB
 CNY
 KZT
 
-IMPORTANT RULES:
+VERY IMPORTANT RULES:
 
-1. Return ONLY valid JSON.
+1. Return ONLY VALID JSON.
 2. No markdown.
 3. No explanations.
-4. Never invent values.
-5. Ignore phone numbers.
-6. Ignore years.
-7. Ignore percentages.
-8. Ignore credit amounts.
-9. Ignore deposit amounts.
-10. Ignore random numbers.
+4. No comments.
+5. No extra text.
+6. Never invent values.
+7. Use ONLY values truly found in text.
+8. Ignore random numbers.
+9. Ignore phone numbers.
+10. Ignore percentages.
+11. Ignore years.
+12. Ignore loan amounts.
+13. Ignore deposit amounts.
+14. Ignore calculator results.
+15. Ignore banners.
+16. Ignore menus.
+17. Ignore advertisements.
 
-VERY IMPORTANT:
+IMPORTANT LOGIC:
 
 If currency does NOT exist:
 buy = "0.0000"
 sell = "0.0000"
 
-If ONLY one rate exists:
+If ONLY ONE value exists:
 buy = real value
 sell = "0.0000"
 
-If BOTH exist:
+If BOTH buy and sell exist:
 use real values.
+
+VERY IMPORTANT:
+
+If you find unrealistic values:
+IGNORE THEM.
+
+Currency patterns:
+
+USD usually starts with:
+9
+
+EUR usually starts with:
+10 or 11
+
+RUB usually starts with:
+0.
+
+CNY usually starts with:
+1.
+
+KZT usually starts with:
+0.
+
+BAD examples:
+73.0000
+5000
+2026
+100000
+32%
+
+NEVER output impossible currency values.
+
+If website has no exchange rates:
+ALL currencies must be:
+"0.0000"
 
 OUTPUT FORMAT:
 
@@ -301,7 +361,7 @@ OUTPUT FORMAT:
 }}
 
 TEXT:
-{markdown[-25000:]}
+{markdown[-30000:]}
 """
 
             # ==========================
@@ -395,7 +455,7 @@ TEXT:
         time.sleep(3)
 
     # ==========================
-    # SAVE PART JSON
+    # SAVE PART
     # ==========================
 
     with open(filename, "w", encoding="utf-8") as f:
@@ -433,7 +493,7 @@ print("============================")
 process_banks(part2_banks, "part2.json")
 
 # ==============================
-# MERGE JSON
+# MERGE
 # ==============================
 
 with open("part1.json", "r", encoding="utf-8") as f:
@@ -459,7 +519,7 @@ with open("data.json", "w", encoding="utf-8") as f:
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
 # ==============================
-# PRINT FINAL
+# FINAL PRINT
 # ==============================
 
 print("\n============================")
