@@ -31,31 +31,31 @@ ALL_BANKS = [
     {"name": "Бонки Миллии Тоҷикистон", "id": "nbt", "website": "https://nbt.tj/"},
     {"name": "Амонатбонк", "id": "amonatbonk", "website": "https://amonatbonk.tj/"},
     {"name": "Ориёнбонк", "id": "oriyonbank", "website": "https://oriyonbonk.tj/"},
-    {"name": "Тавҳидбонк", "id": "tawhidbank", "website": "https://www.tawhidbank.tj/"},
+    {"name": "Тавҳидбонк", "id": "tawhid", "website": "https://www.tawhidbank.tj/"},
     {"name": "Бонки Эсхата", "id": "eskhata", "website": "https://eskhata.com/"},
-    {"name": "Коммерсбонк", "id": "cbt", "website": "https://cbt.tj/"},
-    {"name": "Тиҷорат Бонк", "id": "tejaratbank", "website": "https://tejaratbank.tj/"},
-    {"name": "Спитамен Бонк", "id": "spitamenbank", "website": "https://spitamenbank.tj/"},
+    {"name": "Коммерсбонк", "id": "commerce", "website": "https://cbt.tj/"},
+    {"name": "Тиҷорат Бонк", "id": "tijorat", "website": "https://tejaratbank.tj/"},
+    {"name": "Спитамен Бонк", "id": "spitamen", "website": "https://spitamenbank.tj/"},
     {"name": "Имон Интернешнл Банк", "id": "imon", "website": "https://imon.tj/"},
-    {"name": "Душанбе Сити", "id": "dc", "website": "https://dc.tj/"},
+    {"name": "Душанбе Сити", "id": "dushanbe_city", "website": "https://dc.tj/"},
     {"name": "Алиф Бонк", "id": "alif", "website": "https://alif.tj/"},
     {"name": "Саноатсодиротбонк", "id": "ssb", "website": "https://ssb.tj/"},
     {"name": "IBT", "id": "ibt", "website": "https://ibt.tj/"},
     {"name": "ICB", "id": "icb", "website": "https://icb.tj/"},
     {"name": "Микрофинансбонк", "id": "mfb", "website": "https://mfb.tj/"},
-    {"name": "Бонки рушди Тоҷикистон", "id": "brt", "website": "https://brt.tj/"},
+    {"name": "Бонки рушди Тоҷикистон", "id": "sdb", "website": "https://brt.tj/"},
     {"name": "Ҳумо", "id": "humo", "website": "https://humo.tj/"},
     {"name": "Арванд", "id": "arvand", "website": "https://arvand.tj/"},
     {"name": "FINCA", "id": "finca", "website": "https://finca.tj/"},
-    {"name": "Фридом Бонк Тоҷикистон", "id": "freedombank", "website": "https://freedombank.tj/"},
-    {"name": "Васл Бонк", "id": "vaslbank", "website": "https://vasl.tj/"},
-    {"name": "Актив Бонк", "id": "aktivbank", "website": "https://activbank.tj/"},
-    {"name": "Азизи-Молия", "id": "azizimoliya", "website": "https://azizimoliya.tj/"},
+    {"name": "Фридом Бонк Тоҷикистон", "id": "freedom", "website": "https://freedombank.tj/"},
+    {"name": "Васл Бонк", "id": "vasl", "website": "https://vasl.tj/"},
+    {"name": "Актив Бонк", "id": "aktiv", "website": "https://aktivbank.tj/"},
+    {"name": "Азизи-Молия", "id": "azizi", "website": "https://azizimoliya.tj/"},
     {"name": "Матин", "id": "matin", "website": "https://matin.tj/"}
 ]
 
 # =========================================================
-# SPLIT INTO 8 PARTS
+# SPLIT
 # =========================================================
 
 PARTS = [ALL_BANKS[i:i+3] for i in range(0, len(ALL_BANKS), 3)]
@@ -84,8 +84,11 @@ EMPTY = {
 # =========================================================
 
 def validate(currency, value):
+
     try:
+
         num = float(str(value).replace(",", "."))
+
         lo, hi = VALID_RANGES[currency]
 
         if lo <= num <= hi:
@@ -98,6 +101,7 @@ def validate(currency, value):
 
 
 def clean_json(data):
+
     result = copy.deepcopy(EMPTY)
 
     for cur in CURRENCIES:
@@ -118,27 +122,6 @@ def clean_json(data):
     return result
 
 
-def merge(base, extra):
-
-    result = copy.deepcopy(base)
-
-    for cur in CURRENCIES:
-
-        if (
-            result[cur]["buy"] == "0.0000"
-            and extra[cur]["buy"] != "0.0000"
-        ):
-            result[cur]["buy"] = extra[cur]["buy"]
-
-        if (
-            result[cur]["sell"] == "0.0000"
-            and extra[cur]["sell"] != "0.0000"
-        ):
-            result[cur]["sell"] = extra[cur]["sell"]
-
-    return result
-
-
 def count_found(data):
 
     total = 0
@@ -152,7 +135,6 @@ def count_found(data):
             total += 1
 
     return total
-
 
 # =========================================================
 # FIRECRAWL
@@ -193,10 +175,8 @@ def scrape(url):
 
         return ""
 
-
 # =========================================================
 # AI STAGE 1
-# FIND CURRENCY SECTION
 # =========================================================
 
 SECTION_PROMPT = """
@@ -208,16 +188,12 @@ IMPORTANT:
 - DO NOT explain.
 - DO NOT output JSON.
 - Find ONLY the part containing exchange rates.
-- Ignore menus, footer, contacts, news, loans, cards.
 
 The section MUST contain:
 USD, EUR, RUB, CNY or KZT.
 
-Return maximum 2500 characters.
-
 TEXT:
 """
-
 
 def find_currency_section(markdown):
 
@@ -270,10 +246,8 @@ def find_currency_section(markdown):
 
     return markdown[:2500]
 
-
 # =========================================================
 # AI STAGE 2
-# EXTRACT JSON
 # =========================================================
 
 JSON_PROMPT = """
@@ -283,21 +257,6 @@ STRICT RULES:
 - Return ONLY JSON.
 - Never explain.
 - Never add markdown.
-- Use ONLY numbers from the text.
-- Never invent values.
-- Ignore phone numbers, years, loan rates, percentages.
-
-IMPORTANT:
-- Some banks may have only BUY and no SELL.
-- If sell missing -> "0.0000"
-- If currency missing -> "0.0000"
-
-VALID RANGES:
-USD: 8-12
-EUR: 8-14
-RUB: 0.08-0.25
-CNY: 1-2.5
-KZT: 0.01-0.06
 
 OUTPUT FORMAT:
 
@@ -311,7 +270,6 @@ OUTPUT FORMAT:
 
 TEXT:
 """
-
 
 def extract_rates(text):
 
@@ -383,7 +341,6 @@ def extract_rates(text):
 
     return best
 
-
 # =========================================================
 # PROCESS BANK
 # =========================================================
@@ -401,21 +358,12 @@ def process_bank(bank):
         return {
             "bank_name": bank["name"],
             "bank_id": bank["id"],
-            "website": bank["website"],
             "currencies": copy.deepcopy(EMPTY)
         }
-
-    # ==========================
-    # STAGE 1
-    # ==========================
 
     section = find_currency_section(markdown)
 
     print(f"SECTION SIZE: {len(section)}")
-
-    # ==========================
-    # STAGE 2
-    # ==========================
 
     currencies = extract_rates(section)
 
@@ -424,10 +372,8 @@ def process_bank(bank):
     return {
         "bank_name": bank["name"],
         "bank_id": bank["id"],
-        "website": bank["website"],
         "currencies": currencies
     }
-
 
 # =========================================================
 # PROCESS PART
@@ -458,7 +404,6 @@ def process_part(part, filename):
 
     print(f"\nSAVED: {filename}")
 
-
 # =========================================================
 # RUN
 # =========================================================
@@ -477,7 +422,6 @@ for index, part in enumerate(PARTS):
     if index < len(PARTS)-1:
         time.sleep(20)
 
-
 # =========================================================
 # MERGE
 # =========================================================
@@ -492,6 +436,9 @@ for i in range(1, len(PARTS)+1):
 
         all_rates.extend(data["rates"])
 
+# =========================================================
+# FINAL JSON
+# =========================================================
 
 final = {
     "project_name": "ASOR TJ",
