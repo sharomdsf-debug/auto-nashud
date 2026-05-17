@@ -21,10 +21,10 @@ models = [
 ]
 
 # ==============================
-# BANKS
+# ALL BANKS
 # ==============================
 
-banks = [
+all_banks = [
     {
         "name": "Бонки Миллии Тоҷикистон",
         "id": "nbt",
@@ -148,137 +148,99 @@ banks = [
 ]
 
 # ==============================
-# EMPTY CURRENCIES TEMPLATE
+# SPLIT BANKS
+# ==============================
+
+part1_banks = all_banks[:12]
+part2_banks = all_banks[12:]
+
+# ==============================
+# EMPTY CURRENCIES
 # ==============================
 
 EMPTY_CURRENCIES = {
-    "USD": {
-        "buy": "0.0000",
-        "sell": "0.0000"
-    },
-    "EUR": {
-        "buy": "0.0000",
-        "sell": "0.0000"
-    },
-    "RUB": {
-        "buy": "0.0000",
-        "sell": "0.0000"
-    },
-    "CNY": {
-        "buy": "0.0000",
-        "sell": "0.0000"
-    },
-    "KZT": {
-        "buy": "0.0000",
-        "sell": "0.0000"
+    "USD": {"buy": "0.0000", "sell": "0.0000"},
+    "EUR": {"buy": "0.0000", "sell": "0.0000"},
+    "RUB": {"buy": "0.0000", "sell": "0.0000"},
+    "CNY": {"buy": "0.0000", "sell": "0.0000"},
+    "KZT": {"buy": "0.0000", "sell": "0.0000"}
+}
+
+# ==============================
+# PROCESS FUNCTION
+# ==============================
+
+def process_banks(bank_list, filename):
+
+    result = {
+        "rates": []
     }
-}
 
-# ==============================
-# FINAL JSON
-# ==============================
+    for bank in bank_list:
 
-final_json = {
-    "project_name": "ASOR TJ",
-    "last_updated": "🔹" + datetime.now().strftime("%d.%m.%Y %H:%M"),
-    "base_currency": "TJS",
-    "status": "success",
-    "rates": []
-}
+        print("\n============================")
+        print("CHECKING:", bank["website"])
 
-# ==============================
-# LOOP
-# ==============================
+        currencies = None
 
-for bank in banks:
+        # ==========================
+        # FIRECRAWL
+        # ==========================
 
-    print("\n============================")
-    print("CHECKING:", bank["website"])
+        try:
 
-    currencies = None
+            response = requests.post(
+                "https://api.firecrawl.dev/v1/scrape",
+                headers={
+                    "Authorization": f"Bearer {FIRECRAWL_API}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "url": bank["website"],
+                    "formats": ["markdown"],
+                    "waitFor": 15000
+                },
+                timeout=60
+            )
 
-    # ==========================
-    # FIRECRAWL REQUEST
-    # ==========================
+            data = response.json()
 
-    try:
+        except Exception as e:
 
-        response = requests.post(
-            "https://api.firecrawl.dev/v1/scrape",
-            headers={
-                "Authorization": f"Bearer {FIRECRAWL_API}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "url": bank["website"],
-                "formats": ["markdown"],
-                "waitFor": 15000
-            },
-            timeout=60
-        )
-
-        data = response.json()
-
-    except Exception as e:
-
-        print("FIRECRAWL ERROR:", e)
-
-        currencies = EMPTY_CURRENCIES.copy()
-
-    # ==========================
-    # GET MARKDOWN
-    # ==========================
-
-    markdown = ""
-
-    if currencies is None:
-
-        if "data" in data and "markdown" in data["data"]:
-
-            markdown = data["data"]["markdown"]
-
-            print("TEXT LOADED")
-
-        else:
-
-            print("NO MARKDOWN")
+            print("FIRECRAWL ERROR:", e)
 
             currencies = EMPTY_CURRENCIES.copy()
 
-    # ==========================
-    # AI EXTRACTION
-    # ==========================
+        # ==========================
+        # GET MARKDOWN
+        # ==========================
 
-    if currencies is None:
+        markdown = ""
 
-        prompt = f"""
+        if currencies is None:
+
+            if "data" in data and "markdown" in data["data"]:
+
+                markdown = data["data"]["markdown"]
+
+                print("TEXT LOADED")
+
+            else:
+
+                print("NO MARKDOWN")
+
+                currencies = EMPTY_CURRENCIES.copy()
+
+        # ==========================
+        # AI EXTRACTION
+        # ==========================
+
+        if currencies is None:
+
+            prompt = f"""
 You are a professional AI currency extraction system.
 
-Extract ONLY real exchange rates from the text.
-
-IMPORTANT:
-
-1. Return ONLY valid JSON.
-2. No markdown.
-3. No explanations.
-4. No comments.
-5. Never invent values.
-6. ONLY use values that truly exist in the text.
-7. If currency does not exist in text:
-buy = "0.0000"
-sell = "0.0000"
-
-VERY IMPORTANT:
-
-- Ignore phone numbers
-- Ignore years
-- Ignore percentages
-- Ignore credit amounts
-- Ignore deposit amounts
-- Ignore random numbers
-- Ignore loan calculators
-- Ignore banners
-- Ignore menus
+Extract ONLY real exchange rates.
 
 SUPPORTED CURRENCIES:
 USD
@@ -287,36 +249,31 @@ RUB
 CNY
 KZT
 
-RULES:
+IMPORTANT RULES:
 
-1. If ONLY ONE rate exists:
-buy = existing rate
+1. Return ONLY valid JSON.
+2. No markdown.
+3. No explanations.
+4. Never invent values.
+5. Ignore phone numbers.
+6. Ignore years.
+7. Ignore percentages.
+8. Ignore credit amounts.
+9. Ignore deposit amounts.
+10. Ignore random numbers.
+
+VERY IMPORTANT:
+
+If currency does NOT exist:
+buy = "0.0000"
 sell = "0.0000"
 
-EXAMPLE:
-If only:
-USD 9.3450
+If ONLY one rate exists:
+buy = real value
+sell = "0.0000"
 
-Then:
-"USD": {{
-  "buy": "9.3450",
-  "sell": "0.0000"
-}}
-
-2. If BOTH buy and sell exist:
+If BOTH exist:
 use real values.
-
-3. NEVER invent missing currencies.
-
-EXAMPLE:
-If RUB does NOT exist:
-"RUB": {{
-  "buy": "0.0000",
-  "sell": "0.0000"
-}}
-
-4. If website has no rates:
-ALL currencies must be 0.0000
 
 OUTPUT FORMAT:
 
@@ -347,106 +304,154 @@ TEXT:
 {markdown[-25000:]}
 """
 
-        # ==========================
-        # TRY MODELS
-        # ==========================
+            # ==========================
+            # TRY MODELS
+            # ==========================
 
-        for model in models:
+            for model in models:
 
-            print("\n============================")
-            print("USING MODEL:", model)
+                print("\nUSING MODEL:", model)
 
-            for attempt in range(3):
+                for attempt in range(3):
 
-                print(f"TRY {attempt + 1}/3")
+                    print(f"TRY {attempt + 1}/3")
 
-                try:
+                    try:
 
-                    ai_response = requests.post(
-                        "https://openrouter.ai/api/v1/chat/completions",
-                        headers={
-                            "Authorization": f"Bearer {OPENROUTER_API}",
-                            "Content-Type": "application/json"
-                        },
-                        json={
-                            "model": model,
-                            "messages": [
-                                {
-                                    "role": "user",
-                                    "content": prompt
-                                }
-                            ],
-                            "temperature": 0
-                        },
-                        timeout=120
-                    )
+                        ai_response = requests.post(
+                            "https://openrouter.ai/api/v1/chat/completions",
+                            headers={
+                                "Authorization": f"Bearer {OPENROUTER_API}",
+                                "Content-Type": "application/json"
+                            },
+                            json={
+                                "model": model,
+                                "messages": [
+                                    {
+                                        "role": "user",
+                                        "content": prompt
+                                    }
+                                ],
+                                "temperature": 0
+                            },
+                            timeout=120
+                        )
 
-                    ai_data = ai_response.json()
+                        ai_data = ai_response.json()
 
-                    print("\n========== AI RESPONSE ==========\n")
-                    print(json.dumps(ai_data, ensure_ascii=False, indent=2))
+                        print(json.dumps(ai_data, ensure_ascii=False, indent=2))
 
-                    # ==========================
-                    # CHECK CHOICES
-                    # ==========================
+                        if "choices" not in ai_data:
 
-                    if "choices" not in ai_data:
+                            print("NO CHOICES")
 
-                        print("NO CHOICES FOUND")
+                            time.sleep(10)
+
+                            continue
+
+                        content = ai_data["choices"][0]["message"]["content"]
+
+                        content = content.replace("```json", "")
+                        content = content.replace("```", "")
+                        content = content.strip()
+
+                        currencies = json.loads(content)
+
+                        print("SUCCESS")
+
+                        break
+
+                    except Exception as e:
+
+                        print("AI ERROR:", e)
 
                         time.sleep(10)
 
-                        continue
-
-                    content = ai_data["choices"][0]["message"]["content"]
-
-                    content = content.replace("```json", "")
-                    content = content.replace("```", "")
-                    content = content.strip()
-
-                    currencies = json.loads(content)
-
-                    print("VALID JSON RECEIVED")
+                if currencies is not None:
 
                     break
 
-                except Exception as e:
+        # ==========================
+        # FALLBACK
+        # ==========================
 
-                    print("AI ERROR:", e)
+        if currencies is None:
 
-                    time.sleep(10)
+            currencies = EMPTY_CURRENCIES.copy()
 
-            if currencies is not None:
+        # ==========================
+        # SAVE BANK
+        # ==========================
 
-                print("SUCCESS WITH:", model)
+        result["rates"].append({
+            "bank_name": bank["name"],
+            "bank_id": bank["id"],
+            "website": bank["website"],
+            "currencies": currencies
+        })
 
-                break
+        print("BANK ADDED")
 
-    # ==============================
-    # FINAL SAFETY CHECK
-    # ==============================
+        time.sleep(3)
 
-    if currencies is None:
+    # ==========================
+    # SAVE PART JSON
+    # ==========================
 
-        currencies = EMPTY_CURRENCIES.copy()
+    with open(filename, "w", encoding="utf-8") as f:
 
-    # ==============================
-    # SAVE BANK
-    # ==============================
+        json.dump(result, f, ensure_ascii=False, indent=2)
 
-    final_json["rates"].append({
-        "bank_name": bank["name"],
-        "bank_id": bank["id"],
-        "website": bank["website"],
-        "currencies": currencies
-    })
-
-    print("BANK ADDED")
-
-    time.sleep(3)
+    print(f"\nSAVED: {filename}")
 
 # ==============================
-# SAVE JSON
+# RUN PART 1
+# ==============================
+
+print("\n============================")
+print("STARTING PART 1")
+print("============================")
+
+process_banks(part1_banks, "part1.json")
+
+# ==============================
+# WAIT
+# ==============================
+
+print("\nWAITING 20 SECONDS...\n")
+
+time.sleep(20)
+
+# ==============================
+# RUN PART 2
+# ==============================
+
+print("\n============================")
+print("STARTING PART 2")
+print("============================")
+
+process_banks(part2_banks, "part2.json")
+
+# ==============================
+# MERGE JSON
+# ==============================
+
+with open("part1.json", "r", encoding="utf-8") as f:
+    part1 = json.load(f)
+
+with open("part2.json", "r", encoding="utf-8") as f:
+    part2 = json.load(f)
+
+final_json = {
+    "project_name": "ASOR TJ",
+    "last_updated": "🔹" + datetime.now().strftime("%d.%m.%Y %H:%M"),
+    "base_currency": "TJS",
+    "status": "success",
+    "rates": part1["rates"] + part2["rates"]
+}
+
+# ==============================
+# SAVE FINAL JSON
 # ==============================
 
 with open("data.json", "w", encoding="utf-8") as f:
@@ -454,11 +459,13 @@ with open("data.json", "w", encoding="utf-8") as f:
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
 # ==============================
-# PRINT FINAL JSON
+# PRINT FINAL
 # ==============================
 
-print("\n========== FINAL JSON ==========\n")
+print("\n============================")
+print("FINAL JSON CREATED")
+print("============================")
 
 print(json.dumps(final_json, ensure_ascii=False, indent=2))
 
-print("\nDATA SAVED TO data.json")
+print("\nSAVED TO data.json")
