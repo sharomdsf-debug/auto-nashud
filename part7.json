@@ -1,21 +1,21 @@
 {
   "rates": [
     {
-      "bank_name": "Тавҳидбонк",
-      "bank_id": "tawhidbank",
-      "website": "https://www.tawhidbank.tj/",
+      "bank_name": "FINCA",
+      "bank_id": "finca",
+      "website": "https://finca.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2600",
-          "sell": "9.3600"
+          "buy": "9.29",
+          "sell": "9.38"
         },
         "EUR": {
-          "buy": "10.7500",
-          "sell": "10.9500"
+          "buy": "10.9",
+          "sell": "11.11"
         },
         "RUB": {
-          "buy": "0.1250",
-          "sell": "0.1280"
+          "buy": "0.125",
+          "sell": "0.1275"
         },
         "CNY": {
           "buy": "0.0000",
@@ -28,48 +28,48 @@
       }
     },
     {
-      "bank_name": "Бонки Эсхата",
-      "bank_id": "eskhata",
-      "website": "https://eskhata.com/",
+      "bank_name": "Фридом Бонк Тоҷикистон",
+      "bank_id": "freedombank",
+      "website": "https://freedombank.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2600",
-          "sell": "9.3600"
+          "buy": "9.3450",
+          "sell": "0.0000"
         },
         "EUR": {
-          "buy": "10.6100",
-          "sell": "10.8200"
+          "buy": "10.8757",
+          "sell": "0.0000"
         },
         "RUB": {
-          "buy": "0.1230",
-          "sell": "0.1250"
+          "buy": "0.1277",
+          "sell": "0.0000"
         },
         "CNY": {
           "buy": "0.0000",
           "sell": "0.0000"
         },
         "KZT": {
-          "buy": "0.0000",
+          "buy": "0.0197",
           "sell": "0.0000"
         }
       }
     },
     {
-      "bank_name": "Коммерсбонк",
-      "bank_id": "cbt",
-      "website": "https://cbt.tj/",
+      "bank_name": "Васл Бонк",
+      "bank_id": "vaslbank",
+      "website": "https://vasl.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2500",
-          "sell": "9.3800"
+          "buy": "9.2800",
+          "sell": "9.3500"
         },
         "EUR": {
           "buy": "10.7000",
-          "sell": "11.5000"
+          "sell": "11.0500"
         },
         "RUB": {
-          "buy": "0.1269",
-          "sell": "0.1350"
+          "buy": "0.1209",
+          "sell": "0.1280"
         },
         "CNY": {
           "buy": "0.0000",

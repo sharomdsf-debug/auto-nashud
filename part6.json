@@ -1,75 +1,75 @@
 {
   "rates": [
     {
-      "bank_name": "Тавҳидбонк",
-      "bank_id": "tawhidbank",
-      "website": "https://www.tawhidbank.tj/",
+      "bank_name": "Бонки рушди Тоҷикистон",
+      "bank_id": "brt",
+      "website": "https://brt.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2600",
-          "sell": "9.3600"
-        },
-        "EUR": {
-          "buy": "10.7500",
-          "sell": "10.9500"
-        },
-        "RUB": {
-          "buy": "0.1250",
-          "sell": "0.1280"
-        },
-        "CNY": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        },
-        "KZT": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        }
-      }
-    },
-    {
-      "bank_name": "Бонки Эсхата",
-      "bank_id": "eskhata",
-      "website": "https://eskhata.com/",
-      "currencies": {
-        "USD": {
-          "buy": "9.2600",
-          "sell": "9.3600"
-        },
-        "EUR": {
-          "buy": "10.6100",
-          "sell": "10.8200"
-        },
-        "RUB": {
-          "buy": "0.1230",
-          "sell": "0.1250"
-        },
-        "CNY": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        },
-        "KZT": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        }
-      }
-    },
-    {
-      "bank_name": "Коммерсбонк",
-      "bank_id": "cbt",
-      "website": "https://cbt.tj/",
-      "currencies": {
-        "USD": {
-          "buy": "9.2500",
+          "buy": "9.2800",
           "sell": "9.3800"
         },
         "EUR": {
+          "buy": "10.7300",
+          "sell": "10.9400"
+        },
+        "RUB": {
+          "buy": "0.1266",
+          "sell": "0.1289"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Ҳумо",
+      "bank_id": "humo",
+      "website": "https://humo.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "EUR": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "RUB": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Арванд",
+      "bank_id": "arvand",
+      "website": "https://arvand.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2800",
+          "sell": "9.3600"
+        },
+        "EUR": {
           "buy": "10.7000",
-          "sell": "11.5000"
+          "sell": "10.9000"
         },
         "RUB": {
           "buy": "0.1269",
-          "sell": "0.1350"
+          "sell": "0.1290"
         },
         "CNY": {
           "buy": "0.0000",

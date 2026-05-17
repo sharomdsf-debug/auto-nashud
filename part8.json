@@ -1,12 +1,12 @@
 {
   "rates": [
     {
-      "bank_name": "Тавҳидбонк",
-      "bank_id": "tawhidbank",
-      "website": "https://www.tawhidbank.tj/",
+      "bank_name": "Актив Бонк",
+      "bank_id": "aktivbank",
+      "website": "https://activbank.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2600",
+          "buy": "9.2800",
           "sell": "9.3600"
         },
         "EUR": {
@@ -14,8 +14,35 @@
           "sell": "10.9500"
         },
         "RUB": {
-          "buy": "0.1250",
-          "sell": "0.1280"
+          "buy": "0.1262",
+          "sell": "0.1287"
+        },
+        "CNY": {
+          "buy": "1.3600",
+          "sell": "1.4000"
+        },
+        "KZT": {
+          "buy": "0.01900",
+          "sell": "0.02050"
+        }
+      }
+    },
+    {
+      "bank_name": "Азизи-Молия",
+      "bank_id": "azizimoliya",
+      "website": "https://azizimoliya.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.3200",
+          "sell": "9.3700"
+        },
+        "EUR": {
+          "buy": "10.7000",
+          "sell": "11.0200"
+        },
+        "RUB": {
+          "buy": "0.1265",
+          "sell": "0.1285"
         },
         "CNY": {
           "buy": "0.0000",
@@ -28,48 +55,21 @@
       }
     },
     {
-      "bank_name": "Бонки Эсхата",
-      "bank_id": "eskhata",
-      "website": "https://eskhata.com/",
+      "bank_name": "Матин",
+      "bank_id": "matin",
+      "website": "https://matin.tj/",
       "currencies": {
         "USD": {
           "buy": "9.2600",
           "sell": "9.3600"
         },
         "EUR": {
-          "buy": "10.6100",
-          "sell": "10.8200"
-        },
-        "RUB": {
-          "buy": "0.1230",
-          "sell": "0.1250"
-        },
-        "CNY": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        },
-        "KZT": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        }
-      }
-    },
-    {
-      "bank_name": "Коммерсбонк",
-      "bank_id": "cbt",
-      "website": "https://cbt.tj/",
-      "currencies": {
-        "USD": {
-          "buy": "9.2500",
-          "sell": "9.3800"
-        },
-        "EUR": {
           "buy": "10.7000",
-          "sell": "11.5000"
+          "sell": "10.9000"
         },
         "RUB": {
-          "buy": "0.1269",
-          "sell": "0.1350"
+          "buy": "0.1250",
+          "sell": "0.1270"
         },
         "CNY": {
           "buy": "0.0000",

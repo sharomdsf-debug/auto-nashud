@@ -1,21 +1,21 @@
 {
   "rates": [
     {
-      "bank_name": "Тавҳидбонк",
-      "bank_id": "tawhidbank",
-      "website": "https://www.tawhidbank.tj/",
+      "bank_name": "IBT",
+      "bank_id": "ibt",
+      "website": "https://ibt.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2600",
-          "sell": "9.3600"
+          "buy": "9.2900",
+          "sell": "9.3700"
         },
         "EUR": {
           "buy": "10.7500",
-          "sell": "10.9500"
+          "sell": "10.9700"
         },
         "RUB": {
-          "buy": "0.1250",
-          "sell": "0.1280"
+          "buy": "0.1245",
+          "sell": "0.1270"
         },
         "CNY": {
           "buy": "0.0000",
@@ -28,48 +28,48 @@
       }
     },
     {
-      "bank_name": "Бонки Эсхата",
-      "bank_id": "eskhata",
-      "website": "https://eskhata.com/",
+      "bank_name": "ICB",
+      "bank_id": "icb",
+      "website": "https://icb.tj/",
       "currencies": {
         "USD": {
+          "buy": "9.3450",
+          "sell": "10.8757"
+        },
+        "EUR": {
           "buy": "9.2600",
-          "sell": "9.3600"
-        },
-        "EUR": {
-          "buy": "10.6100",
-          "sell": "10.8200"
-        },
-        "RUB": {
-          "buy": "0.1230",
-          "sell": "0.1250"
-        },
-        "CNY": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        },
-        "KZT": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        }
-      }
-    },
-    {
-      "bank_name": "Коммерсбонк",
-      "bank_id": "cbt",
-      "website": "https://cbt.tj/",
-      "currencies": {
-        "USD": {
-          "buy": "9.2500",
-          "sell": "9.3800"
-        },
-        "EUR": {
-          "buy": "10.7000",
-          "sell": "11.5000"
+          "sell": "10.7500"
         },
         "RUB": {
           "buy": "0.1269",
-          "sell": "0.1350"
+          "sell": "0.1288"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Микрофинансбонк",
+      "bank_id": "mfb",
+      "website": "https://mfb.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "EUR": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "RUB": {
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "CNY": {
           "buy": "0.0000",
