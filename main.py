@@ -49,7 +49,7 @@ ALL_BANKS = [
     {"name": "FINCA", "id": "finca", "website": "https://finca.tj/"},
     {"name": "Фридом Бонк Тоҷикистон", "id": "freedom", "website": "https://freedombank.tj/"},
     {"name": "Васл Бонк", "id": "vasl", "website": "https://vasl.tj/"},
-    {"name": "Актив Бонк", "id": "aktiv", "website": "https://aktivbank.tj/"},
+    {"name": "Актив Бонк", "id": "aktiv", "website": "https://activbank.tj/"},
     {"name": "Азизи-Молия", "id": "azizi", "website": "https://azizimoliya.tj/"},
     {"name": "Матин", "id": "matin", "website": "https://matin.tj/"}
 ]
@@ -188,9 +188,12 @@ IMPORTANT:
 - DO NOT explain.
 - DO NOT output JSON.
 - Find ONLY the part containing exchange rates.
+- Ignore menus, footer, contacts, news, loans, cards.
 
 The section MUST contain:
 USD, EUR, RUB, CNY or KZT.
+
+Return maximum 2500 characters.
 
 TEXT:
 """
@@ -257,6 +260,21 @@ STRICT RULES:
 - Return ONLY JSON.
 - Never explain.
 - Never add markdown.
+- Use ONLY numbers from the text.
+- Never invent values.
+- Ignore phone numbers, years, loan rates, percentages.
+
+IMPORTANT:
+- Some banks may have only BUY and no SELL.
+- If sell missing -> "0.0000"
+- If currency missing -> "0.0000"
+
+VALID RANGES:
+USD: 8-12
+EUR: 8-14
+RUB: 0.08-0.25
+CNY: 1-2.5
+KZT: 0.01-0.06
 
 OUTPUT FORMAT:
 
@@ -435,10 +453,6 @@ for i in range(1, len(PARTS)+1):
         data = json.load(f)
 
         all_rates.extend(data["rates"])
-
-# =========================================================
-# FINAL JSON
-# =========================================================
 
 final = {
     "project_name": "ASOR TJ",
