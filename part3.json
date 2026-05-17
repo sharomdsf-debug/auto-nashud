@@ -3,17 +3,18 @@
     {
       "bank_name": "Тиҷорат Бонк",
       "bank_id": "tijorat",
+      "website": "https://tejaratbank.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.3450",
+          "buy": "0.0000",
           "sell": "0.0000"
         },
         "EUR": {
-          "buy": "10.8757",
+          "buy": "0.0000",
           "sell": "0.0000"
         },
         "RUB": {
-          "buy": "0.1277",
+          "buy": "0.0000",
           "sell": "0.0000"
         },
         "CNY": {
@@ -29,21 +30,22 @@
     {
       "bank_name": "Спитамен Бонк",
       "bank_id": "spitamen",
+      "website": "https://spitamenbank.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2700",
-          "sell": "9.3600"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "EUR": {
-          "buy": "10.8000",
-          "sell": "11.0200"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "RUB": {
-          "buy": "0.1250",
-          "sell": "0.1270"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "CNY": {
-          "buy": "1.3724",
+          "buy": "0.0000",
           "sell": "0.0000"
         },
         "KZT": {
@@ -55,6 +57,7 @@
     {
       "bank_name": "Имон Интернешнл Банк",
       "bank_id": "imon",
+      "website": "https://imon.tj/",
       "currencies": {
         "USD": {
           "buy": "0.0000",

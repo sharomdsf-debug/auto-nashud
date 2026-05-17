@@ -3,18 +3,19 @@
     {
       "bank_name": "FINCA",
       "bank_id": "finca",
+      "website": "https://finca.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2900",
-          "sell": "9.3800"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "EUR": {
-          "buy": "10.9000",
-          "sell": "11.1100"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "RUB": {
-          "buy": "0.1250",
-          "sell": "0.1275"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "CNY": {
           "buy": "0.0000",
@@ -29,17 +30,18 @@
     {
       "bank_name": "Фридом Бонк Тоҷикистон",
       "bank_id": "freedom",
+      "website": "https://freedombank.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.3450",
+          "buy": "0.0000",
           "sell": "0.0000"
         },
         "EUR": {
-          "buy": "10.8757",
+          "buy": "0.0000",
           "sell": "0.0000"
         },
         "RUB": {
-          "buy": "0.1277",
+          "buy": "0.0000",
           "sell": "0.0000"
         },
         "CNY": {
@@ -47,7 +49,7 @@
           "sell": "0.0000"
         },
         "KZT": {
-          "buy": "0.0197",
+          "buy": "0.0000",
           "sell": "0.0000"
         }
       }
@@ -55,18 +57,19 @@
     {
       "bank_name": "Васл Бонк",
       "bank_id": "vasl",
+      "website": "https://vasl.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2800",
-          "sell": "9.3500"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "EUR": {
-          "buy": "10.7000",
-          "sell": "11.0500"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "RUB": {
-          "buy": "0.1269",
-          "sell": "0.1280"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "CNY": {
           "buy": "0.0000",
