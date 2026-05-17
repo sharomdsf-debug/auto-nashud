@@ -6,15 +6,15 @@
       "website": "https://finca.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.29",
-          "sell": "9.38"
+          "buy": "9.2900",
+          "sell": "9.3800"
         },
         "EUR": {
-          "buy": "10.9",
-          "sell": "11.11"
+          "buy": "10.9000",
+          "sell": "11.1100"
         },
         "RUB": {
-          "buy": "0.125",
+          "buy": "0.1250",
           "sell": "0.1275"
         },
         "CNY": {
