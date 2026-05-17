@@ -1,408 +1,656 @@
-import requests
-import os
-import json
-import time
-import copy
-import re
-from datetime import datetime
-
-# =========================================================
-# API
-# =========================================================
-
-FIRECRAWL_API = os.getenv("FIRECRAWL_API")
-OPENROUTER_API = os.getenv("OPENROUTER_API")
-
-# =========================================================
-# AI MODELS
-# =========================================================
-
-MODELS = [
-    "openai/gpt-oss-120b:free",
-    "deepseek/deepseek-v3-base:free",
-    "qwen/qwen3-coder:free"
-]
-
-# =========================================================
-# BANKS
-# =========================================================
-
-ALL_BANKS = [
-    {"name": "Бонки Миллии Тоҷикистон", "id": "nbt", "website": "https://nbt.tj/"},
-    {"name": "Амонатбонк", "id": "amonatbonk", "website": "https://amonatbonk.tj/"},
-    {"name": "Ориёнбонк", "id": "oriyonbank", "website": "https://oriyonbonk.tj/"},
-    {"name": "Тавҳидбонк", "id": "tawhid", "website": "https://www.tawhidbank.tj/"},
-    {"name": "Бонки Эсхата", "id": "eskhata", "website": "https://eskhata.com/"},
-    {"name": "Коммерсбонк", "id": "commerce", "website": "https://cbt.tj/"},
-    {"name": "Тиҷорат Бонк", "id": "tijorat", "website": "https://tejaratbank.tj/"},
-    {"name": "Спитамен Бонк", "id": "spitamen", "website": "https://spitamenbank.tj/"},
-    {"name": "Имон Интернешнл Банк", "id": "imon", "website": "https://imon.tj/"},
-    {"name": "Душанбе Сити", "id": "dushanbe_city", "website": "https://dc.tj/"},
-    {"name": "Алиф Бонк", "id": "alif", "website": "https://alif.tj/"},
-    {"name": "Саноатсодиротбонк", "id": "ssb", "website": "https://ssb.tj/"},
-    {"name": "IBT", "id": "ibt", "website": "https://ibt.tj/"},
-    {"name": "ICB", "id": "icb", "website": "https://icb.tj/"},
-    {"name": "Микрофинансбонк", "id": "mfb", "website": "https://mfb.tj/"},
-    {"name": "Бонки рушди Тоҷикистон", "id": "sdb", "website": "https://brt.tj/"},
-    {"name": "Ҳумо", "id": "humo", "website": "https://humo.tj/"},
-    {"name": "Арванд", "id": "arvand", "website": "https://arvand.tj/"},
-    {"name": "FINCA", "id": "finca", "website": "https://finca.tj/"},
-    {"name": "Фридом Бонк Тоҷикистон", "id": "freedom", "website": "https://freedombank.tj/"},
-    {"name": "Васл Бонк", "id": "vasl", "website": "https://vasl.tj/"},
-    {"name": "Актив Бонк", "id": "aktiv", "website": "https://aktivbank.tj/"},
-    {"name": "Азизи-Молия", "id": "azizi", "website": "https://azizimoliya.tj/"},
-    {"name": "Матин", "id": "matin", "website": "https://matin.tj/"}
-]
-
-# =========================================================
-# SPLIT
-# =========================================================
-
-PARTS = [ALL_BANKS[i:i+3] for i in range(0, len(ALL_BANKS), 3)]
-
-# =========================================================
-# CURRENCIES
-# =========================================================
-
-CURRENCIES = ["USD", "EUR", "RUB", "CNY", "KZT"]
-
-EMPTY = {
-    "USD": {"buy":"0.0000","sell":"0.0000"},
-    "EUR": {"buy":"0.0000","sell":"0.0000"},
-    "RUB": {"buy":"0.0000","sell":"0.0000"},
-    "CNY": {"buy":"0.0000","sell":"0.0000"},
-    "KZT": {"buy":"0.0000","sell":"0.0000"}
-}
-
-# =========================================================
-# HELPERS
-# =========================================================
-
-def format_number(value):
-
-    try:
-        num = float(str(value).replace(",", "."))
-        return f"{num:.4f}"
-    except:
-        return "0.0000"
-
-
-def clean_json(data):
-
-    result = copy.deepcopy(EMPTY)
-
-    for cur in CURRENCIES:
-
-        if cur not in data:
-            continue
-
-        buy = data[cur].get("buy", "0.0000")
-        sell = data[cur].get("sell", "0.0000")
-
-        result[cur]["buy"] = format_number(buy)
-        result[cur]["sell"] = format_number(sell)
-
-    return result
-
-
-# =========================================================
-# FIRECRAWL
-# =========================================================
-
-def scrape(url):
-
-    print(f"\nSCRAPING: {url}")
-
-    try:
-
-        response = requests.post(
-            "https://api.firecrawl.dev/v1/scrape",
-            headers={
-                "Authorization": f"Bearer {FIRECRAWL_API}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "url": url,
-                "formats": ["markdown"],
-                "onlyMainContent": False,
-                "waitFor": 10000
-            },
-            timeout=60
-        )
-
-        data = response.json()
-
-        markdown = data.get("data", {}).get("markdown", "")
-
-        markdown = re.sub(r'\s+', ' ', markdown)
-
-        return markdown[:15000]
-
-    except Exception as e:
-
-        print("SCRAPE ERROR:", e)
-
-        return ""
-
-
-# =========================================================
-# AI SECTION
-# =========================================================
-
-SECTION_PROMPT = """
-Find ONLY exchange rates section.
-
-Return raw text only.
-
-Must contain:
-USD EUR RUB CNY KZT
-
-TEXT:
-"""
-
-
-def find_currency_section(markdown):
-
-    for model in MODELS:
-
-        try:
-
-            response = requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {OPENROUTER_API}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": model,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": SECTION_PROMPT + markdown
-                        }
-                    ],
-                    "temperature": 0,
-                    "max_tokens": 1000
-                },
-                timeout=60
-            )
-
-            data = response.json()
-
-            if "choices" not in data:
-                continue
-
-            text = data["choices"][0]["message"]["content"]
-
-            if len(text) > 50:
-                return text
-
-        except:
-            pass
-
-    return markdown[:2500]
-
-
-# =========================================================
-# AI JSON
-# =========================================================
-
-JSON_PROMPT = """
-Extract currency exchange rates.
-
-Return ONLY JSON.
-
-FORMAT:
-
 {
-  "USD":{"buy":"0.0000","sell":"0.0000"},
-  "EUR":{"buy":"0.0000","sell":"0.0000"},
-  "RUB":{"buy":"0.0000","sell":"0.0000"},
-  "CNY":{"buy":"0.0000","sell":"0.0000"},
-  "KZT":{"buy":"0.0000","sell":"0.0000"}
-}
-
-TEXT:
-"""
-
-
-def extract_rates(text):
-
-    best = copy.deepcopy(EMPTY)
-
-    for model in MODELS:
-
-        for attempt in range(2):
-
-            try:
-
-                response = requests.post(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {OPENROUTER_API}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": model,
-                        "messages": [
-                            {
-                                "role": "user",
-                                "content": JSON_PROMPT + text
-                            }
-                        ],
-                        "temperature": 0,
-                        "max_tokens": 300
-                    },
-                    timeout=60
-                )
-
-                data = response.json()
-
-                if "choices" not in data:
-                    continue
-
-                raw = data["choices"][0]["message"]["content"]
-
-                raw = raw.replace("```json", "")
-                raw = raw.replace("```", "")
-
-                start = raw.find("{")
-                end = raw.rfind("}") + 1
-
-                if start == -1:
-                    continue
-
-                parsed = json.loads(raw[start:end])
-
-                cleaned = clean_json(parsed)
-
-                final = {}
-
-                for cur in CURRENCIES:
-
-                    final[cur] = {
-                        "buy": cleaned[cur]["buy"],
-                        "sell": cleaned[cur]["sell"]
-                    }
-
-                return final
-
-            except:
-                pass
-
-            time.sleep(2)
-
-    return best
-
-
-# =========================================================
-# PROCESS BANK
-# =========================================================
-
-def process_bank(bank):
-
-    print("\n" + "="*60)
-    print(bank["name"])
-    print("="*60)
-
-    markdown = scrape(bank["website"])
-
-    if not markdown:
-
-        return {
-            "bank_name": bank["name"],
-            "bank_id": bank["id"],
-            "currencies": copy.deepcopy(EMPTY)
+  "project_name": "ASOR TJ",
+  "last_updated": "🔹17.05.2026 12:55",
+  "base_currency": "TJS",
+  "status": "success",
+  "rates": [
+    {
+      "bank_name": "Бонки Миллии Тоҷикистон",
+      "bank_id": "nbt",
+      "website": "https://nbt.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.3450",
+          "sell": "0.0000"
+        },
+        "EUR": {
+          "buy": "10.8757",
+          "sell": "0.0000"
+        },
+        "RUB": {
+          "buy": "0.1277",
+          "sell": "0.0000"
+        },
+        "CNY": {
+          "buy": "1.3724",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
         }
-
-    section = find_currency_section(markdown)
-
-    currencies = extract_rates(section)
-
-    return {
-        "bank_name": bank["name"],
-        "bank_id": bank["id"],
-        "currencies": currencies
+      }
+    },
+    {
+      "bank_name": "Амонатбонк",
+      "bank_id": "amonatbonk",
+      "website": "https://amonatbonk.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2700",
+          "sell": "9.3600"
+        },
+        "EUR": {
+          "buy": "10.7000",
+          "sell": "10.9000"
+        },
+        "RUB": {
+          "buy": "0.1230",
+          "sell": "0.1250"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Ориёнбонк",
+      "bank_id": "oriyonbank",
+      "website": "https://oriyonbonk.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.3000",
+          "sell": "9.3700"
+        },
+        "EUR": {
+          "buy": "10.8000",
+          "sell": "11.0500"
+        },
+        "RUB": {
+          "buy": "0.1269",
+          "sell": "0.1295"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Тавҳидбонк",
+      "bank_id": "tawhidbank",
+      "website": "https://www.tawhidbank.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2600",
+          "sell": "9.3600"
+        },
+        "EUR": {
+          "buy": "10.7500",
+          "sell": "10.9500"
+        },
+        "RUB": {
+          "buy": "0.1250",
+          "sell": "0.1280"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Бонки Эсхата",
+      "bank_id": "eskhata",
+      "website": "https://eskhata.com/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2600",
+          "sell": "9.3600"
+        },
+        "EUR": {
+          "buy": "10.6100",
+          "sell": "10.8200"
+        },
+        "RUB": {
+          "buy": "0.1230",
+          "sell": "0.1250"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Коммерсбонк",
+      "bank_id": "cbt",
+      "website": "https://cbt.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2500",
+          "sell": "9.3800"
+        },
+        "EUR": {
+          "buy": "10.7000",
+          "sell": "11.5000"
+        },
+        "RUB": {
+          "buy": "0.1269",
+          "sell": "0.1350"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Тиҷорат Бонк",
+      "bank_id": "tejaratbank",
+      "website": "https://tejaratbank.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.3000",
+          "sell": "9.3800"
+        },
+        "EUR": {
+          "buy": "10.8000",
+          "sell": "11.2000"
+        },
+        "RUB": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Спитамен Бонк",
+      "bank_id": "spitamenbank",
+      "website": "https://spitamenbank.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2700",
+          "sell": "9.3600"
+        },
+        "EUR": {
+          "buy": "10.8000",
+          "sell": "11.0200"
+        },
+        "RUB": {
+          "buy": "0.1250",
+          "sell": "0.1270"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Имон Интернешнл Банк",
+      "bank_id": "imon",
+      "website": "https://imon.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "EUR": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "RUB": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Душанбе Сити",
+      "bank_id": "dc",
+      "website": "https://dc.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.3500",
+          "sell": "9.4300"
+        },
+        "EUR": {
+          "buy": "10.9000",
+          "sell": "11.1100"
+        },
+        "RUB": {
+          "buy": "0.1249",
+          "sell": "0.1273"
+        },
+        "CNY": {
+          "buy": "1.3500",
+          "sell": "1.3900"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Алиф Бонк",
+      "bank_id": "alif",
+      "website": "https://alif.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.3000",
+          "sell": "9.3800"
+        },
+        "EUR": {
+          "buy": "10.8300",
+          "sell": "11.0500"
+        },
+        "RUB": {
+          "buy": "0.1269",
+          "sell": "0.1294"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Саноатсодиротбонк",
+      "bank_id": "ssb",
+      "website": "https://ssb.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2700",
+          "sell": "9.3700"
+        },
+        "EUR": {
+          "buy": "10.7000",
+          "sell": "11.0500"
+        },
+        "RUB": {
+          "buy": "0.1266",
+          "sell": "0.1290"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "IBT",
+      "bank_id": "ibt",
+      "website": "https://ibt.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2900",
+          "sell": "9.3700"
+        },
+        "EUR": {
+          "buy": "10.7500",
+          "sell": "10.9700"
+        },
+        "RUB": {
+          "buy": "0.1245",
+          "sell": "0.1270"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "ICB",
+      "bank_id": "icb",
+      "website": "https://icb.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "EUR": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "RUB": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Микрофинансбонк",
+      "bank_id": "mfb",
+      "website": "https://mfb.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "EUR": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "RUB": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Бонки рушди Тоҷикистон",
+      "bank_id": "brt",
+      "website": "https://brt.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2800",
+          "sell": "9.3800"
+        },
+        "EUR": {
+          "buy": "10.7300",
+          "sell": "10.9400"
+        },
+        "RUB": {
+          "buy": "0.1266",
+          "sell": "0.1289"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Ҳумо",
+      "bank_id": "humo",
+      "website": "https://humo.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "EUR": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "RUB": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Арванд",
+      "bank_id": "arvand",
+      "website": "https://arvand.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2800",
+          "sell": "9.3600"
+        },
+        "EUR": {
+          "buy": "10.7000",
+          "sell": "10.9000"
+        },
+        "RUB": {
+          "buy": "0.1269",
+          "sell": "0.1290"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "FINCA",
+      "bank_id": "finca",
+      "website": "https://finca.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2900",
+          "sell": "9.3800"
+        },
+        "EUR": {
+          "buy": "10.9000",
+          "sell": "11.1100"
+        },
+        "RUB": {
+          "buy": "0.1250",
+          "sell": "0.1275"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Фридом Бонк Тоҷикистон",
+      "bank_id": "freedombank",
+      "website": "https://freedombank.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.3450",
+          "sell": "0.0000"
+        },
+        "EUR": {
+          "buy": "10.8757",
+          "sell": "0.0000"
+        },
+        "RUB": {
+          "buy": "0.1277",
+          "sell": "0.0000"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0197",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Васл Бонк",
+      "bank_id": "vaslbank",
+      "website": "https://vasl.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2800",
+          "sell": "9.3500"
+        },
+        "EUR": {
+          "buy": "10.7000",
+          "sell": "11.0500"
+        },
+        "RUB": {
+          "buy": "0.1209",
+          "sell": "0.1280"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Актив Бонк",
+      "bank_id": "aktivbank",
+      "website": "https://activbank.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2800",
+          "sell": "9.3600"
+        },
+        "EUR": {
+          "buy": "10.8500",
+          "sell": "11.0700"
+        },
+        "RUB": {
+          "buy": "0.1266",
+          "sell": "0.1290"
+        },
+        "CNY": {
+          "buy": "1.3600",
+          "sell": "1.4000"
+        },
+        "KZT": {
+          "buy": "0.0193",
+          "sell": "0.0210"
+        }
+      }
+    },
+    {
+      "bank_name": "Азизи-Молия",
+      "bank_id": "azizimoliya",
+      "website": "https://azizimoliya.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.3200",
+          "sell": "9.3700"
+        },
+        "EUR": {
+          "buy": "10.7000",
+          "sell": "11.0200"
+        },
+        "RUB": {
+          "buy": "0.1265",
+          "sell": "0.1285"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
+    },
+    {
+      "bank_name": "Матин",
+      "bank_id": "matin",
+      "website": "https://matin.tj/",
+      "currencies": {
+        "USD": {
+          "buy": "9.2600",
+          "sell": "9.3600"
+        },
+        "EUR": {
+          "buy": "10.7000",
+          "sell": "10.9000"
+        },
+        "RUB": {
+          "buy": "0.1250",
+          "sell": "0.1270"
+        },
+        "CNY": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
+        "KZT": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        }
+      }
     }
-
-
-# =========================================================
-# PROCESS PART
-# =========================================================
-
-def process_part(part, filename):
-
-    result = {
-        "rates": []
-    }
-
-    for bank in part:
-
-        item = process_bank(bank)
-
-        result["rates"].append(item)
-
-        time.sleep(3)
-
-    with open(filename, "w", encoding="utf-8") as f:
-
-        json.dump(
-            result,
-            f,
-            ensure_ascii=False,
-            indent=2
-        )
-
-
-# =========================================================
-# RUN
-# =========================================================
-
-for index, part in enumerate(PARTS):
-
-    process_part(
-        part,
-        f"part{index+1}.json"
-    )
-
-    if index < len(PARTS)-1:
-        time.sleep(5)
-
-# =========================================================
-# MERGE
-# =========================================================
-
-all_rates = []
-
-for i in range(1, len(PARTS)+1):
-
-    with open(f"part{i}.json", encoding="utf-8") as f:
-
-        data = json.load(f)
-
-        all_rates.extend(data["rates"])
-
-# =========================================================
-# FINAL JSON
-# =========================================================
-
-final = {
-    "project_name": "ASOR TJ",
-    "last_updated": "🔹" + datetime.now().strftime("%d.%m.%Y %H:%M"),
-    "base_currency": "TJS",
-    "status": "success",
-    "rates": all_rates
+  ]
 }
-
-with open("data.json", "w", encoding="utf-8") as f:
-
-    json.dump(
-        final,
-        f,
-        ensure_ascii=False,
-        indent=2
-    )
-
-print("\nDONE")
-
-print(json.dumps(final, ensure_ascii=False, indent=2))
