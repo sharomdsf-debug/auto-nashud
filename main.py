@@ -2,30 +2,32 @@ import requests
 import os
 import json
 import time
+import re
+import copy
 from datetime import datetime
 
-# ==============================
-# API KEYS
-# ==============================
+# =========================================================
+# API
+# =========================================================
 
 FIRECRAWL_API = os.getenv("FIRECRAWL_API")
 OPENROUTER_API = os.getenv("OPENROUTER_API")
 
-# ==============================
+# =========================================================
 # AI MODELS
-# ==============================
+# =========================================================
 
-models = [
+MODELS = [
     "openai/gpt-oss-120b:free",
-    "deepseek/deepseek-v4-flash:free",
+    "deepseek/deepseek-v3-base:free",
     "qwen/qwen3-coder:free"
 ]
 
-# ==============================
+# =========================================================
 # BANKS
-# ==============================
+# =========================================================
 
-all_banks = [
+ALL_BANKS = [
     {"name": "Бонки Миллии Тоҷикистон", "id": "nbt", "website": "https://nbt.tj/"},
     {"name": "Амонатбонк", "id": "amonatbonk", "website": "https://amonatbonk.tj/"},
     {"name": "Ориёнбонк", "id": "oriyonbank", "website": "https://oriyonbonk.tj/"},
@@ -52,365 +54,481 @@ all_banks = [
     {"name": "Матин", "id": "matin", "website": "https://matin.tj/"}
 ]
 
-# ==============================
+# =========================================================
 # SPLIT INTO 8 PARTS
-# ==============================
+# =========================================================
 
-parts = [
-    all_banks[0:3],
-    all_banks[3:6],
-    all_banks[6:9],
-    all_banks[9:12],
-    all_banks[12:15],
-    all_banks[15:18],
-    all_banks[18:21],
-    all_banks[21:24]
+PARTS = [
+    ALL_BANKS[0:3],
+    ALL_BANKS[3:6],
+    ALL_BANKS[6:9],
+    ALL_BANKS[9:12],
+    ALL_BANKS[12:15],
+    ALL_BANKS[15:18],
+    ALL_BANKS[18:21],
+    ALL_BANKS[21:24]
 ]
 
-# ==============================
-# EMPTY DATA
-# ==============================
+# =========================================================
+# VALIDATION
+# =========================================================
 
-EMPTY_CURRENCIES = {
-    "USD": {"buy": "0.0000", "sell": "0.0000"},
-    "EUR": {"buy": "0.0000", "sell": "0.0000"},
-    "RUB": {"buy": "0.0000", "sell": "0.0000"},
-    "CNY": {"buy": "0.0000", "sell": "0.0000"},
-    "KZT": {"buy": "0.0000", "sell": "0.0000"}
+VALID_RANGES = {
+    "USD": (8.0, 12.0),
+    "EUR": (8.0, 14.0),
+    "RUB": (0.08, 0.25),
+    "CNY": (1.0, 2.5),
+    "KZT": (0.010, 0.060)
 }
 
-# ==============================
-# PROCESS FUNCTION
-# ==============================
+CURRENCIES = list(VALID_RANGES.keys())
 
-def process_part(bank_list, filename):
+EMPTY = {
+    c: {
+        "buy": "0.0000",
+        "sell": "0.0000"
+    }
+    for c in CURRENCIES
+}
+
+# =========================================================
+# KEYWORDS
+# =========================================================
+
+KEYWORDS = [
+    "usd", "eur", "rub", "cny", "kzt",
+    "курс", "қурб", "валют", "асъор",
+    "exchange", "currency",
+    "харид", "фурӯш",
+    "buy", "sell",
+    "покупка", "продажа"
+]
+
+# =========================================================
+# HELPERS
+# =========================================================
+
+def validate_value(currency, value):
+    try:
+        value = str(value).replace(",", ".").strip()
+        num = float(value)
+
+        low, high = VALID_RANGES[currency]
+
+        if low <= num <= high:
+            return f"{num:.4f}"
+
+        return "0.0000"
+
+    except:
+        return "0.0000"
+
+
+def clean_ai_json(data):
+    result = copy.deepcopy(EMPTY)
+
+    for currency in CURRENCIES:
+
+        if currency not in data:
+            continue
+
+        result[currency]["buy"] = validate_value(
+            currency,
+            data[currency].get("buy", "0")
+        )
+
+        result[currency]["sell"] = validate_value(
+            currency,
+            data[currency].get("sell", "0")
+        )
+
+    return result
+
+
+def merge_currencies(base, extra):
+
+    result = copy.deepcopy(base)
+
+    for currency in CURRENCIES:
+
+        if (
+            result[currency]["buy"] == "0.0000"
+            and extra[currency]["buy"] != "0.0000"
+        ):
+            result[currency]["buy"] = extra[currency]["buy"]
+
+        if (
+            result[currency]["sell"] == "0.0000"
+            and extra[currency]["sell"] != "0.0000"
+        ):
+            result[currency]["sell"] = extra[currency]["sell"]
+
+    return result
+
+
+def count_found(currencies):
+
+    total = 0
+
+    for currency in CURRENCIES:
+
+        if (
+            currencies[currency]["buy"] != "0.0000"
+            or currencies[currency]["sell"] != "0.0000"
+        ):
+            total += 1
+
+    return total
+
+
+# =========================================================
+# SMART CHUNKS
+# =========================================================
+
+CHUNK_SIZE = 40000
+OVERLAP = 4000
+MAX_CHUNKS = 5
+
+def build_chunks(markdown):
+
+    text = markdown.replace("\r", "\n")
+
+    chunks = []
+
+    step = CHUNK_SIZE - OVERLAP
+
+    for i in range(0, len(text), step):
+
+        chunk = text[i:i + CHUNK_SIZE]
+
+        lower = chunk.lower()
+
+        score = 0
+
+        for keyword in KEYWORDS:
+            score += lower.count(keyword)
+
+        chunks.append({
+            "score": score,
+            "text": chunk
+        })
+
+    chunks.sort(key=lambda x: x["score"], reverse=True)
+
+    final_chunks = []
+
+    for item in chunks[:MAX_CHUNKS]:
+        final_chunks.append(item["text"])
+
+    if not final_chunks:
+        final_chunks.append(text[:CHUNK_SIZE])
+
+    return final_chunks
+
+
+# =========================================================
+# FIRECRAWL
+# =========================================================
+
+def scrape(url):
+
+    print(f"\nSCRAPING: {url}")
+
+    try:
+
+        response = requests.post(
+            "https://api.firecrawl.dev/v1/scrape",
+            headers={
+                "Authorization": f"Bearer {FIRECRAWL_API}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "url": url,
+                "formats": ["markdown"],
+                "onlyMainContent": False,
+                "waitFor": 15000
+            },
+            timeout=180
+        )
+
+        data = response.json()
+
+        markdown = data.get("data", {}).get("markdown", "")
+
+        print(f"MARKDOWN SIZE: {len(markdown)}")
+
+        return markdown
+
+    except Exception as e:
+
+        print("SCRAPE ERROR:", e)
+
+        return ""
+
+
+# =========================================================
+# AI PROMPT
+# =========================================================
+
+PROMPT = """
+Extract REAL bank currency exchange rates against TJS.
+
+VERY IMPORTANT:
+
+ALL BANKS HAVE REAL EXCHANGE RATES.
+You must carefully search the website text and find them.
+
+Currencies:
+USD
+EUR
+RUB
+CNY
+KZT
+
+Rules:
+
+- Return ONLY valid JSON.
+- No markdown.
+- No explanations.
+- Use ONLY numbers found in the text.
+- Never invent values.
+- Ignore:
+  phone numbers,
+  years,
+  loan percentages,
+  deposit percentages,
+  card limits,
+  menu numbers.
+
+VALID RANGES:
+
+USD: 8.0 - 12.0
+EUR: 8.0 - 14.0
+RUB: 0.08 - 0.25
+CNY: 1.0 - 2.5
+KZT: 0.010 - 0.060
+
+VERY IMPORTANT:
+
+- If currency truly not found:
+  buy = "0.0000"
+  sell = "0.0000"
+
+- If only one value exists:
+  put it into buy
+  sell = "0.0000"
+
+- NEVER copy values from another currency.
+
+STRICT JSON FORMAT:
+
+{
+  "USD": {"buy":"0.0000","sell":"0.0000"},
+  "EUR": {"buy":"0.0000","sell":"0.0000"},
+  "RUB": {"buy":"0.0000","sell":"0.0000"},
+  "CNY": {"buy":"0.0000","sell":"0.0000"},
+  "KZT": {"buy":"0.0000","sell":"0.0000"}
+}
+
+WEBSITE TEXT:
+"""
+
+
+# =========================================================
+# AI CALL
+# =========================================================
+
+def ask_ai(chunk):
+
+    for model in MODELS:
+
+        print(f"\nMODEL: {model}")
+
+        for attempt in range(3):
+
+            print(f"TRY {attempt + 1}/3")
+
+            try:
+
+                response = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {OPENROUTER_API}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": model,
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": PROMPT + chunk
+                            }
+                        ],
+                        "temperature": 0,
+                        "max_tokens": 300
+                    },
+                    timeout=180
+                )
+
+                data = response.json()
+
+                if "choices" not in data:
+                    print("NO CHOICES")
+                    time.sleep(10)
+                    continue
+
+                content = data["choices"][0]["message"]["content"]
+
+                content = re.sub(r"```json", "", content)
+                content = re.sub(r"```", "", content).strip()
+
+                start = content.find("{")
+                end = content.rfind("}") + 1
+
+                if start == -1:
+                    raise Exception("JSON NOT FOUND")
+
+                content = content[start:end]
+
+                parsed = json.loads(content)
+
+                cleaned = clean_ai_json(parsed)
+
+                found = count_found(cleaned)
+
+                print(f"FOUND: {found}/5")
+
+                if found > 0:
+                    return cleaned
+
+            except Exception as e:
+
+                print("AI ERROR:", e)
+
+            time.sleep(8)
+
+    return copy.deepcopy(EMPTY)
+
+
+# =========================================================
+# PROCESS BANK
+# =========================================================
+
+def process_bank(bank):
+
+    print("\n" + "=" * 60)
+    print(bank["name"])
+    print(bank["website"])
+    print("=" * 60)
+
+    markdown = scrape(bank["website"])
+
+    currencies = copy.deepcopy(EMPTY)
+
+    if not markdown:
+
+        print("NO MARKDOWN")
+
+        return {
+            "bank_name": bank["name"],
+            "bank_id": bank["id"],
+            "website": bank["website"],
+            "currencies": currencies
+        }
+
+    chunks = build_chunks(markdown)
+
+    print(f"CHUNKS: {len(chunks)}")
+
+    for index, chunk in enumerate(chunks):
+
+        print(f"\nCHUNK {index + 1}")
+
+        ai_result = ask_ai(chunk)
+
+        currencies = merge_currencies(
+            currencies,
+            ai_result
+        )
+
+        print(f"TOTAL FOUND: {count_found(currencies)}/5")
+
+        time.sleep(3)
+
+    return {
+        "bank_name": bank["name"],
+        "bank_id": bank["id"],
+        "website": bank["website"],
+        "currencies": currencies
+    }
+
+
+# =========================================================
+# PROCESS PART
+# =========================================================
+
+def process_part(part, filename):
 
     result = {
         "rates": []
     }
 
-    for bank in bank_list:
+    for bank in part:
 
-        print("\n============================")
-        print("CHECKING:", bank["website"])
+        bank_data = process_bank(bank)
 
-        currencies = None
-
-        # ==========================
-        # FIRECRAWL
-        # ==========================
-
-        try:
-
-            response = requests.post(
-                "https://api.firecrawl.dev/v1/scrape",
-                headers={
-                    "Authorization": f"Bearer {FIRECRAWL_API}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "url": bank["website"],
-                    "formats": ["markdown"],
-                    "waitFor": 15000
-                },
-                timeout=120
-            )
-
-            data = response.json()
-
-        except Exception as e:
-
-            print("FIRECRAWL ERROR:", e)
-
-            currencies = EMPTY_CURRENCIES.copy()
-
-        # ==========================
-        # MARKDOWN
-        # ==========================
-
-        markdown = ""
-
-        if currencies is None:
-
-            if "data" in data and "markdown" in data["data"]:
-
-                markdown = data["data"]["markdown"]
-
-                print("MARKDOWN LOADED")
-                print("TEXT SIZE:", len(markdown))
-
-            else:
-
-                print("NO MARKDOWN")
-
-                currencies = EMPTY_CURRENCIES.copy()
-
-        # ==========================
-        # AI
-        # ==========================
-
-        if currencies is None:
-
-            prompt = f"""
-You are an advanced AI currency extraction system.
-
-VERY IMPORTANT:
-
-ALL BANKS DEFINITELY HAVE EXCHANGE RATES.
-
-Your ONLY job is to FIND REAL currency exchange rates inside the website text.
-
-The exchange rates DEFINITELY EXIST somewhere in the text.
-
-SEARCH VERY CAREFULLY.
-
-IMPORTANT KEYWORDS:
-
-Қурби асъор
-Курс валют
-Exchange rates
-USD
-EUR
-RUB
-CNY
-KZT
-Харид
-Фурӯш
-Покупка
-Продажа
-Buy
-Sell
-
-SUPPORTED CURRENCIES:
-
-USD
-EUR
-RUB
-CNY
-KZT
-
-VERY IMPORTANT RULES:
-
-1. Return ONLY valid JSON.
-2. No markdown.
-3. No explanations.
-4. No comments.
-5. No extra text.
-6. Never invent values.
-7. Use ONLY REAL values from text.
-8. Ignore menus.
-9. Ignore banners.
-10. Ignore articles.
-11. Ignore phone numbers.
-12. Ignore years.
-13. Ignore percentages.
-14. Ignore advertisements.
-15. Ignore random numbers.
-16. Ignore loans.
-17. Ignore deposits.
-
-IMPORTANT:
-
-If ONLY ONE value exists:
-buy = real value
-sell = "0.0000"
-
-If currency does NOT exist:
-buy = "0.0000"
-sell = "0.0000"
-
-IMPORTANT VALUE VALIDATION:
-
-USD usually:
-8 - 11
-
-EUR usually:
-9 - 12
-
-RUB usually:
-0.10 - 0.20
-
-CNY usually:
-1 - 2
-
-KZT usually:
-0.01 - 0.05
-
-If value looks unrealistic:
-IGNORE IT.
-
-NEVER generate fake currency values.
-
-If website completely fails:
-output all currencies as 0.0000
-
-OUTPUT FORMAT:
-
-{{
-  "USD": {{
-    "buy": "0.0000",
-    "sell": "0.0000"
-  }},
-  "EUR": {{
-    "buy": "0.0000",
-    "sell": "0.0000"
-  }},
-  "RUB": {{
-    "buy": "0.0000",
-    "sell": "0.0000"
-  }},
-  "CNY": {{
-    "buy": "0.0000",
-    "sell": "0.0000"
-  }},
-  "KZT": {{
-    "buy": "0.0000",
-    "sell": "0.0000"
-  }}
-}}
-
-FULL WEBSITE TEXT:
-
-{markdown}
-"""
-
-            # ==========================
-            # TRY MODELS
-            # ==========================
-
-            for model in models:
-
-                print("\nUSING MODEL:", model)
-
-                success = False
-
-                for attempt in range(3):
-
-                    print(f"TRY {attempt + 1}/3")
-
-                    try:
-
-                        ai_response = requests.post(
-                            "https://openrouter.ai/api/v1/chat/completions",
-                            headers={
-                                "Authorization": f"Bearer {OPENROUTER_API}",
-                                "Content-Type": "application/json"
-                            },
-                            json={
-                                "model": model,
-                                "messages": [
-                                    {
-                                        "role": "user",
-                                        "content": prompt
-                                    }
-                                ],
-                                "temperature": 0
-                            },
-                            timeout=180
-                        )
-
-                        ai_data = ai_response.json()
-
-                        print(json.dumps(ai_data, ensure_ascii=False, indent=2))
-
-                        if "choices" not in ai_data:
-
-                            print("NO CHOICES")
-
-                            time.sleep(10)
-
-                            continue
-
-                        content = ai_data["choices"][0]["message"]["content"]
-
-                        content = content.replace("```json", "")
-                        content = content.replace("```", "")
-                        content = content.strip()
-
-                        currencies = json.loads(content)
-
-                        success = True
-
-                        print("SUCCESS")
-
-                        break
-
-                    except Exception as e:
-
-                        print("AI ERROR:", e)
-
-                        time.sleep(10)
-
-                if success:
-
-                    break
-
-        # ==========================
-        # FALLBACK
-        # ==========================
-
-        if currencies is None:
-
-            currencies = EMPTY_CURRENCIES.copy()
-
-        # ==========================
-        # ADD BANK
-        # ==========================
-
-        result["rates"].append({
-            "bank_name": bank["name"],
-            "bank_id": bank["id"],
-            "website": bank["website"],
-            "currencies": currencies
-        })
-
-        print("BANK ADDED")
+        result["rates"].append(bank_data)
 
         time.sleep(5)
 
-    # ==========================
-    # SAVE PART
-    # ==========================
-
     with open(filename, "w", encoding="utf-8") as f:
 
-        json.dump(result, f, ensure_ascii=False, indent=2)
+        json.dump(
+            result,
+            f,
+            ensure_ascii=False,
+            indent=2
+        )
 
-    print("\nSAVED:", filename)
+    print(f"\nSAVED: {filename}")
 
-# ==============================
-# RUN ALL PARTS
-# ==============================
 
-for index, part in enumerate(parts):
+# =========================================================
+# RUN
+# =========================================================
 
-    print("\n============================")
-    print(f"STARTING PART {index + 1}")
-    print("============================")
+for index, part in enumerate(PARTS):
 
-    process_part(part, f"part{index + 1}.json")
+    print("\n" + "#" * 70)
+    print(f"PART {index + 1}/{len(PARTS)}")
+    print("#" * 70)
 
-    print("\nWAITING 20 SECONDS...\n")
+    process_part(
+        part,
+        f"part{index + 1}.json"
+    )
 
-    time.sleep(20)
+    if index < len(PARTS) - 1:
 
-# ==============================
-# MERGE ALL
-# ==============================
+        print("\nWAITING 20 SECONDS...\n")
+
+        time.sleep(20)
+
+
+# =========================================================
+# MERGE JSON
+# =========================================================
 
 all_rates = []
 
-for i in range(1, 9):
+for i in range(1, len(PARTS) + 1):
 
-    with open(f"part{i}.json", "r", encoding="utf-8") as f:
+    with open(f"part{i}.json", encoding="utf-8") as f:
 
         data = json.load(f)
 
         all_rates.extend(data["rates"])
 
-# ==============================
-# FINAL JSON
-# ==============================
 
 final_json = {
     "project_name": "ASOR TJ",
@@ -420,22 +538,14 @@ final_json = {
     "rates": all_rates
 }
 
-# ==============================
-# SAVE FINAL
-# ==============================
-
 with open("data.json", "w", encoding="utf-8") as f:
 
-    json.dump(final_json, f, ensure_ascii=False, indent=2)
+    json.dump(
+        final_json,
+        f,
+        ensure_ascii=False,
+        indent=2
+    )
 
-# ==============================
-# PRINT
-# ==============================
-
-print("\n============================")
-print("FINAL JSON CREATED")
-print("============================")
-
+print("\nDONE")
 print(json.dumps(final_json, ensure_ascii=False, indent=2))
-
-print("\nDATA SAVED TO data.json")
