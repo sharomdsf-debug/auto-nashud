@@ -22,142 +22,53 @@ models = [
 ]
 
 # ==============================
-# ALL BANKS
+# BANKS
 # ==============================
 
 all_banks = [
-    {
-        "name": "Бонки Миллии Тоҷикистон",
-        "id": "nbt",
-        "website": "https://nbt.tj/"
-    },
-    {
-        "name": "Амонатбонк",
-        "id": "amonatbonk",
-        "website": "https://amonatbonk.tj/"
-    },
-    {
-        "name": "Ориёнбонк",
-        "id": "oriyonbank",
-        "website": "https://oriyonbonk.tj/"
-    },
-    {
-        "name": "Тавҳидбонк",
-        "id": "tawhidbank",
-        "website": "https://www.tawhidbank.tj/"
-    },
-    {
-        "name": "Бонки Эсхата",
-        "id": "eskhata",
-        "website": "https://eskhata.com/"
-    },
-    {
-        "name": "Коммерсбонк",
-        "id": "cbt",
-        "website": "https://cbt.tj/"
-    },
-    {
-        "name": "Тиҷорат Бонк",
-        "id": "tejaratbank",
-        "website": "https://tejaratbank.tj/"
-    },
-    {
-        "name": "Спитамен Бонк",
-        "id": "spitamenbank",
-        "website": "https://spitamenbank.tj/"
-    },
-    {
-        "name": "Имон Интернешнл Банк",
-        "id": "imon",
-        "website": "https://imon.tj/"
-    },
-    {
-        "name": "Душанбе Сити",
-        "id": "dc",
-        "website": "https://dc.tj/"
-    },
-    {
-        "name": "Алиф Бонк",
-        "id": "alif",
-        "website": "https://alif.tj/"
-    },
-    {
-        "name": "Саноатсодиротбонк",
-        "id": "ssb",
-        "website": "https://ssb.tj/"
-    },
-    {
-        "name": "IBT",
-        "id": "ibt",
-        "website": "https://ibt.tj/"
-    },
-    {
-        "name": "ICB",
-        "id": "icb",
-        "website": "https://icb.tj/"
-    },
-    {
-        "name": "Микрофинансбонк",
-        "id": "mfb",
-        "website": "https://mfb.tj/"
-    },
-    {
-        "name": "Бонки рушди Тоҷикистон",
-        "id": "brt",
-        "website": "https://brt.tj/"
-    },
-    {
-        "name": "Ҳумо",
-        "id": "humo",
-        "website": "https://humo.tj/"
-    },
-    {
-        "name": "Арванд",
-        "id": "arvand",
-        "website": "https://arvand.tj/"
-    },
-    {
-        "name": "FINCA",
-        "id": "finca",
-        "website": "https://finca.tj/"
-    },
-    {
-        "name": "Фридом Бонк Тоҷикистон",
-        "id": "freedombank",
-        "website": "https://freedombank.tj/"
-    },
-    {
-        "name": "Васл Бонк",
-        "id": "vaslbank",
-        "website": "https://vasl.tj/"
-    },
-    {
-        "name": "Актив Бонк",
-        "id": "aktivbank",
-        "website": "https://activbank.tj/"
-    },
-    {
-        "name": "Азизи-Молия",
-        "id": "azizimoliya",
-        "website": "https://azizimoliya.tj/"
-    },
-    {
-        "name": "Матин",
-        "id": "matin",
-        "website": "https://matin.tj/"
-    }
+    {"name": "Бонки Миллии Тоҷикистон", "id": "nbt", "website": "https://nbt.tj/"},
+    {"name": "Амонатбонк", "id": "amonatbonk", "website": "https://amonatbonk.tj/"},
+    {"name": "Ориёнбонк", "id": "oriyonbank", "website": "https://oriyonbonk.tj/"},
+    {"name": "Тавҳидбонк", "id": "tawhidbank", "website": "https://www.tawhidbank.tj/"},
+    {"name": "Бонки Эсхата", "id": "eskhata", "website": "https://eskhata.com/"},
+    {"name": "Коммерсбонк", "id": "cbt", "website": "https://cbt.tj/"},
+    {"name": "Тиҷорат Бонк", "id": "tejaratbank", "website": "https://tejaratbank.tj/"},
+    {"name": "Спитамен Бонк", "id": "spitamenbank", "website": "https://spitamenbank.tj/"},
+    {"name": "Имон Интернешнл Банк", "id": "imon", "website": "https://imon.tj/"},
+    {"name": "Душанбе Сити", "id": "dc", "website": "https://dc.tj/"},
+    {"name": "Алиф Бонк", "id": "alif", "website": "https://alif.tj/"},
+    {"name": "Саноатсодиротбонк", "id": "ssb", "website": "https://ssb.tj/"},
+    {"name": "IBT", "id": "ibt", "website": "https://ibt.tj/"},
+    {"name": "ICB", "id": "icb", "website": "https://icb.tj/"},
+    {"name": "Микрофинансбонк", "id": "mfb", "website": "https://mfb.tj/"},
+    {"name": "Бонки рушди Тоҷикистон", "id": "brt", "website": "https://brt.tj/"},
+    {"name": "Ҳумо", "id": "humo", "website": "https://humo.tj/"},
+    {"name": "Арванд", "id": "arvand", "website": "https://arvand.tj/"},
+    {"name": "FINCA", "id": "finca", "website": "https://finca.tj/"},
+    {"name": "Фридом Бонк Тоҷикистон", "id": "freedombank", "website": "https://freedombank.tj/"},
+    {"name": "Васл Бонк", "id": "vaslbank", "website": "https://vasl.tj/"},
+    {"name": "Актив Бонк", "id": "aktivbank", "website": "https://activbank.tj/"},
+    {"name": "Азизи-Молия", "id": "azizimoliya", "website": "https://azizimoliya.tj/"},
+    {"name": "Матин", "id": "matin", "website": "https://matin.tj/"}
 ]
 
 # ==============================
-# SPLIT TO 3 PARTS
+# SPLIT INTO 8 PARTS
 # ==============================
 
-part1_banks = all_banks[:8]
-part2_banks = all_banks[8:16]
-part3_banks = all_banks[16:24]
+parts = [
+    all_banks[0:3],
+    all_banks[3:6],
+    all_banks[6:9],
+    all_banks[9:12],
+    all_banks[12:15],
+    all_banks[15:18],
+    all_banks[18:21],
+    all_banks[21:24]
+]
 
 # ==============================
-# EMPTY JSON
+# EMPTY DATA
 # ==============================
 
 EMPTY_CURRENCIES = {
@@ -172,7 +83,7 @@ EMPTY_CURRENCIES = {
 # PROCESS FUNCTION
 # ==============================
 
-def process_banks(bank_list, filename):
+def process_part(bank_list, filename):
 
     result = {
         "rates": []
@@ -202,7 +113,7 @@ def process_banks(bank_list, filename):
                     "formats": ["markdown"],
                     "waitFor": 15000
                 },
-                timeout=90
+                timeout=120
             )
 
             data = response.json()
@@ -214,7 +125,7 @@ def process_banks(bank_list, filename):
             currencies = EMPTY_CURRENCIES.copy()
 
         # ==========================
-        # GET MARKDOWN
+        # MARKDOWN
         # ==========================
 
         markdown = ""
@@ -225,7 +136,8 @@ def process_banks(bank_list, filename):
 
                 markdown = data["data"]["markdown"]
 
-                print("TEXT LOADED")
+                print("MARKDOWN LOADED")
+                print("TEXT SIZE:", len(markdown))
 
             else:
 
@@ -234,7 +146,7 @@ def process_banks(bank_list, filename):
                 currencies = EMPTY_CURRENCIES.copy()
 
         # ==========================
-        # AI EXTRACTION
+        # AI
         # ==========================
 
         if currencies is None:
@@ -246,13 +158,13 @@ VERY IMPORTANT:
 
 ALL BANKS DEFINITELY HAVE EXCHANGE RATES.
 
-Your ONLY job is to CAREFULLY FIND the REAL currency exchange rates inside the website text.
+Your ONLY job is to FIND REAL currency exchange rates inside the website text.
 
-The exchange rates EXIST somewhere in the text.
+The exchange rates DEFINITELY EXIST somewhere in the text.
 
-You must search VERY CAREFULLY.
+SEARCH VERY CAREFULLY.
 
-IMPORTANT SEARCH WORDS:
+IMPORTANT KEYWORDS:
 
 Қурби асъор
 Курс валют
@@ -285,39 +197,27 @@ VERY IMPORTANT RULES:
 4. No comments.
 5. No extra text.
 6. Never invent values.
-7. Use ONLY REAL values found in text.
+7. Use ONLY REAL values from text.
 8. Ignore menus.
 9. Ignore banners.
-10. Ignore loans.
-11. Ignore deposits.
-12. Ignore phone numbers.
+10. Ignore articles.
+11. Ignore phone numbers.
+12. Ignore years.
 13. Ignore percentages.
-14. Ignore years.
+14. Ignore advertisements.
 15. Ignore random numbers.
-16. Ignore calculators.
-17. Ignore advertisements.
-18. Ignore article numbers.
+16. Ignore loans.
+17. Ignore deposits.
 
 IMPORTANT:
-
-Many websites contain VERY LONG text.
-
-The exchange rates may be hidden deep inside the text.
-
-Search CAREFULLY until the END.
-
-IMPORTANT LOGIC:
-
-If currency does NOT exist:
-buy = "0.0000"
-sell = "0.0000"
 
 If ONLY ONE value exists:
 buy = real value
 sell = "0.0000"
 
-If BOTH buy and sell exist:
-use real values.
+If currency does NOT exist:
+buy = "0.0000"
+sell = "0.0000"
 
 IMPORTANT VALUE VALIDATION:
 
@@ -339,18 +239,10 @@ KZT usually:
 If value looks unrealistic:
 IGNORE IT.
 
-Examples of BAD values:
-73
-5000
-2026
-100000
-32%
-
-NEVER output unrealistic currency rates.
+NEVER generate fake currency values.
 
 If website completely fails:
-output all currencies as:
-"0.0000"
+output all currencies as 0.0000
 
 OUTPUT FORMAT:
 
@@ -377,8 +269,9 @@ OUTPUT FORMAT:
   }}
 }}
 
-TEXT:
-{markdown[-40000:]}
+FULL WEBSITE TEXT:
+
+{markdown}
 """
 
             # ==========================
@@ -473,7 +366,7 @@ TEXT:
 
         print("BANK ADDED")
 
-        time.sleep(3)
+        time.sleep(5)
 
     # ==========================
     # SAVE PART
@@ -483,66 +376,37 @@ TEXT:
 
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    print(f"\nSAVED: {filename}")
+    print("\nSAVED:", filename)
 
 # ==============================
-# PART 1
+# RUN ALL PARTS
 # ==============================
 
-print("\n============================")
-print("STARTING PART 1")
-print("============================")
+for index, part in enumerate(parts):
 
-process_banks(part1_banks, "part1.json")
+    print("\n============================")
+    print(f"STARTING PART {index + 1}")
+    print("============================")
 
-# ==============================
-# WAIT
-# ==============================
+    process_part(part, f"part{index + 1}.json")
 
-print("\nWAITING 20 SECONDS...\n")
+    print("\nWAITING 20 SECONDS...\n")
 
-time.sleep(20)
+    time.sleep(20)
 
 # ==============================
-# PART 2
+# MERGE ALL
 # ==============================
 
-print("\n============================")
-print("STARTING PART 2")
-print("============================")
+all_rates = []
 
-process_banks(part2_banks, "part2.json")
+for i in range(1, 9):
 
-# ==============================
-# WAIT
-# ==============================
+    with open(f"part{i}.json", "r", encoding="utf-8") as f:
 
-print("\nWAITING 20 SECONDS...\n")
+        data = json.load(f)
 
-time.sleep(20)
-
-# ==============================
-# PART 3
-# ==============================
-
-print("\n============================")
-print("STARTING PART 3")
-print("============================")
-
-process_banks(part3_banks, "part3.json")
-
-# ==============================
-# LOAD PARTS
-# ==============================
-
-with open("part1.json", "r", encoding="utf-8") as f:
-    part1 = json.load(f)
-
-with open("part2.json", "r", encoding="utf-8") as f:
-    part2 = json.load(f)
-
-with open("part3.json", "r", encoding="utf-8") as f:
-    part3 = json.load(f)
+        all_rates.extend(data["rates"])
 
 # ==============================
 # FINAL JSON
@@ -553,11 +417,7 @@ final_json = {
     "last_updated": "🔹" + datetime.now().strftime("%d.%m.%Y %H:%M"),
     "base_currency": "TJS",
     "status": "success",
-    "rates": (
-        part1["rates"] +
-        part2["rates"] +
-        part3["rates"]
-    )
+    "rates": all_rates
 }
 
 # ==============================
@@ -569,7 +429,7 @@ with open("data.json", "w", encoding="utf-8") as f:
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
 # ==============================
-# PRINT FINAL
+# PRINT
 # ==============================
 
 print("\n============================")
@@ -578,4 +438,4 @@ print("============================")
 
 print(json.dumps(final_json, ensure_ascii=False, indent=2))
 
-print("\nSAVED TO data.json")
+print("\nDATA SAVED TO data.json")
