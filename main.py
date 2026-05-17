@@ -55,7 +55,7 @@ ALL_BANKS = [
 ]
 
 # =========================================================
-# SPLIT
+# SPLIT INTO 8 PARTS
 # =========================================================
 
 PARTS = [ALL_BANKS[i:i+3] for i in range(0, len(ALL_BANKS), 3)]
@@ -87,7 +87,7 @@ def validate(currency, value):
 
     try:
 
-        num = float(str(value).replace(",", "."))
+        num = float(str(value).replace(",", ".").strip())
 
         lo, hi = VALID_RANGES[currency]
 
@@ -156,9 +156,9 @@ def scrape(url):
                 "url": url,
                 "formats": ["markdown"],
                 "onlyMainContent": False,
-                "waitFor": 15000
+                "waitFor": 20000
             },
-            timeout=180
+            timeout=240
         )
 
         data = response.json()
@@ -180,33 +180,68 @@ def scrape(url):
 # =========================================================
 
 SECTION_PROMPT = """
-You are extracting ONLY the currency exchange section from a bank website.
+You are extracting ONLY the REAL currency exchange section from a bank website.
+
+CRITICAL:
+The website definitely contains currency exchange rates.
+Your task is to FIND that section.
+
+FIRST:
+Search for sections containing:
+- USD
+- EUR
+- RUB
+- CNY
+- KZT
+- Асъор
+- Қурб
+- Валюта
+- Exchange
+- Buy
+- Sell
+- Харид
+- Фурӯш
+- Покупка
+- Продажа
+
+PRIORITY:
+Prefer tables and blocks containing:
+USD | EUR | RUB | CNY | KZT
+
+IGNORE:
+- loans
+- deposit rates
+- cashback
+- percentages
+- cards
+- advertisements
+- phone numbers
+- contacts
+- news
+- menus
+- tenders
+- years
 
 IMPORTANT:
-- Return ONLY raw text.
-- DO NOT summarize.
+- Return ONLY RAW TEXT.
 - DO NOT explain.
-- DO NOT output JSON.
-- Find ONLY the part containing exchange rates.
-- Ignore menus, footer, contacts, news, loans, cards.
+- DO NOT summarize.
+- DO NOT return JSON.
+- DO NOT modify numbers.
+- Return the SMALLEST possible exchange-rate section.
 
-The section MUST contain:
-USD, EUR, RUB, CNY or KZT.
-
-Return maximum 2500 characters.
+The result MUST contain currency rates.
 
 TEXT:
 """
 
 def find_currency_section(markdown):
 
-    markdown = markdown[:40000]
-
     for model in MODELS:
 
         print(f"\nSECTION MODEL: {model}")
 
-        for attempt in range(2):
+        for attempt in range(3):
 
             try:
 
@@ -225,9 +260,9 @@ def find_currency_section(markdown):
                             }
                         ],
                         "temperature": 0,
-                        "max_tokens": 1200
+                        "max_tokens": 2000
                     },
-                    timeout=180
+                    timeout=240
                 )
 
                 data = response.json()
@@ -237,8 +272,10 @@ def find_currency_section(markdown):
 
                 text = data["choices"][0]["message"]["content"]
 
-                if len(text) > 100:
+                if len(text) > 50:
+
                     print("SECTION FOUND")
+
                     return text
 
             except Exception as e:
@@ -247,7 +284,7 @@ def find_currency_section(markdown):
 
             time.sleep(5)
 
-    return markdown[:2500]
+    return markdown
 
 # =========================================================
 # AI STAGE 2
@@ -256,13 +293,34 @@ def find_currency_section(markdown):
 JSON_PROMPT = """
 Extract REAL bank exchange rates against TJS.
 
+IMPORTANT:
+The text DEFINITELY contains currency exchange rates.
+
+FIRST:
+Focus ONLY on rows, tables or text blocks containing:
+- USD
+- EUR
+- RUB
+- CNY
+- KZT
+
+IGNORE:
+- loan rates
+- percentages
+- phone numbers
+- years
+- advertisements
+- cashback
+- deposits
+- cards
+- menus
+
 STRICT RULES:
-- Return ONLY JSON.
+- Return ONLY valid JSON.
 - Never explain.
 - Never add markdown.
 - Use ONLY numbers from the text.
 - Never invent values.
-- Ignore phone numbers, years, loan rates, percentages.
 
 IMPORTANT:
 - Some banks may have only BUY and no SELL.
@@ -316,9 +374,9 @@ def extract_rates(text):
                             }
                         ],
                         "temperature": 0,
-                        "max_tokens": 300
+                        "max_tokens": 400
                     },
-                    timeout=180
+                    timeout=240
                 )
 
                 data = response.json()
@@ -376,6 +434,7 @@ def process_bank(bank):
         return {
             "bank_name": bank["name"],
             "bank_id": bank["id"],
+            "website": bank["website"],
             "currencies": copy.deepcopy(EMPTY)
         }
 
@@ -390,6 +449,7 @@ def process_bank(bank):
     return {
         "bank_name": bank["name"],
         "bank_id": bank["id"],
+        "website": bank["website"],
         "currencies": currencies
     }
 
