@@ -279,48 +279,17 @@ def find_currency_section(markdown):
 JSON_PROMPT = """
 Extract REAL bank exchange rates against TJS.
 
-FIRST:
-Find ONLY the currency exchange section.
-
-Look for words like:
-- USD
-- EUR
-- RUB
-- CNY
-- KZT
-- Асъор
-- Қурб
-- Харид
-- Фурӯш
-- Buy
-- Sell
-- Exchange
-- Валюта
-
-Ignore ALL other website content:
-- loans
-- deposits
-- phone numbers
-- years
-- percentages
-- advertisements
-- cards
-- cashback
-- news
-
-THEN:
-Extract exchange rates ONLY from that currency section.
-
 STRICT RULES:
-- Return ONLY valid JSON
-- No markdown
-- No explanation
-- Use ONLY numbers from the text
-- Never invent values
+- Return ONLY JSON.
+- Never explain.
+- Never add markdown.
+- Use ONLY numbers from the text.
+- Never invent values.
+- Ignore phone numbers, years, loan rates, percentages.
 
 IMPORTANT:
-- Some banks may only have BUY prices
-- If SELL missing -> "0.0000"
+- Some banks may have only BUY and no SELL.
+- If sell missing -> "0.0000"
 - If currency missing -> "0.0000"
 
 VALID RANGES:
@@ -342,6 +311,7 @@ OUTPUT FORMAT:
 
 TEXT:
 """
+
 
 def extract_rates(text):
 
