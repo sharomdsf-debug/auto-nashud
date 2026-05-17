@@ -17,7 +17,8 @@ OPENROUTER_API = os.getenv("OPENROUTER_API")
 
 models = [
     "openai/gpt-oss-120b:free",
-    "deepseek/deepseek-v4-flash:free"
+    "deepseek/deepseek-v4-flash:free",
+    "qwen/qwen3-coder:free"
 ]
 
 # ==============================
@@ -148,14 +149,15 @@ all_banks = [
 ]
 
 # ==============================
-# SPLIT BANKS
+# SPLIT TO 3 PARTS
 # ==============================
 
-part1_banks = all_banks[:12]
-part2_banks = all_banks[12:]
+part1_banks = all_banks[:8]
+part2_banks = all_banks[8:16]
+part3_banks = all_banks[16:24]
 
 # ==============================
-# EMPTY CURRENCIES
+# EMPTY JSON
 # ==============================
 
 EMPTY_CURRENCIES = {
@@ -200,7 +202,7 @@ def process_banks(bank_list, filename):
                     "formats": ["markdown"],
                     "waitFor": 15000
                 },
-                timeout=60
+                timeout=90
             )
 
             data = response.json()
@@ -240,27 +242,35 @@ def process_banks(bank_list, filename):
             prompt = f"""
 You are an advanced AI currency extraction system.
 
-Your ONLY job is to extract REAL currency exchange rates from the website text.
+VERY IMPORTANT:
 
-IMPORTANT:
-Search VERY CAREFULLY for currency tables near words:
+ALL BANKS DEFINITELY HAVE EXCHANGE RATES.
 
-Курс валют
+Your ONLY job is to CAREFULLY FIND the REAL currency exchange rates inside the website text.
+
+The exchange rates EXIST somewhere in the text.
+
+You must search VERY CAREFULLY.
+
+IMPORTANT SEARCH WORDS:
+
 Қурби асъор
+Курс валют
 Exchange rates
 USD
 EUR
 RUB
 CNY
 KZT
-Покупка
-Продажа
 Харид
 Фурӯш
+Покупка
+Продажа
 Buy
 Sell
 
 SUPPORTED CURRENCIES:
+
 USD
 EUR
 RUB
@@ -269,23 +279,32 @@ KZT
 
 VERY IMPORTANT RULES:
 
-1. Return ONLY VALID JSON.
+1. Return ONLY valid JSON.
 2. No markdown.
 3. No explanations.
 4. No comments.
 5. No extra text.
 6. Never invent values.
-7. Use ONLY values truly found in text.
-8. Ignore random numbers.
-9. Ignore phone numbers.
-10. Ignore percentages.
-11. Ignore years.
-12. Ignore loan amounts.
-13. Ignore deposit amounts.
-14. Ignore calculator results.
-15. Ignore banners.
-16. Ignore menus.
+7. Use ONLY REAL values found in text.
+8. Ignore menus.
+9. Ignore banners.
+10. Ignore loans.
+11. Ignore deposits.
+12. Ignore phone numbers.
+13. Ignore percentages.
+14. Ignore years.
+15. Ignore random numbers.
+16. Ignore calculators.
 17. Ignore advertisements.
+18. Ignore article numbers.
+
+IMPORTANT:
+
+Many websites contain VERY LONG text.
+
+The exchange rates may be hidden deep inside the text.
+
+Search CAREFULLY until the END.
 
 IMPORTANT LOGIC:
 
@@ -300,39 +319,37 @@ sell = "0.0000"
 If BOTH buy and sell exist:
 use real values.
 
-VERY IMPORTANT:
+IMPORTANT VALUE VALIDATION:
 
-If you find unrealistic values:
-IGNORE THEM.
+USD usually:
+8 - 11
 
-Currency patterns:
+EUR usually:
+9 - 12
 
-USD usually starts with:
-9
+RUB usually:
+0.10 - 0.20
 
-EUR usually starts with:
-10 or 11
+CNY usually:
+1 - 2
 
-RUB usually starts with:
-0.
+KZT usually:
+0.01 - 0.05
 
-CNY usually starts with:
-1.
+If value looks unrealistic:
+IGNORE IT.
 
-KZT usually starts with:
-0.
-
-BAD examples:
-73.0000
+Examples of BAD values:
+73
 5000
 2026
 100000
 32%
 
-NEVER output impossible currency values.
+NEVER output unrealistic currency rates.
 
-If website has no exchange rates:
-ALL currencies must be:
+If website completely fails:
+output all currencies as:
 "0.0000"
 
 OUTPUT FORMAT:
@@ -361,7 +378,7 @@ OUTPUT FORMAT:
 }}
 
 TEXT:
-{markdown[-30000:]}
+{markdown[-40000:]}
 """
 
             # ==========================
@@ -371,6 +388,8 @@ TEXT:
             for model in models:
 
                 print("\nUSING MODEL:", model)
+
+                success = False
 
                 for attempt in range(3):
 
@@ -394,7 +413,7 @@ TEXT:
                                 ],
                                 "temperature": 0
                             },
-                            timeout=120
+                            timeout=180
                         )
 
                         ai_data = ai_response.json()
@@ -417,6 +436,8 @@ TEXT:
 
                         currencies = json.loads(content)
 
+                        success = True
+
                         print("SUCCESS")
 
                         break
@@ -427,7 +448,7 @@ TEXT:
 
                         time.sleep(10)
 
-                if currencies is not None:
+                if success:
 
                     break
 
@@ -440,7 +461,7 @@ TEXT:
             currencies = EMPTY_CURRENCIES.copy()
 
         # ==========================
-        # SAVE BANK
+        # ADD BANK
         # ==========================
 
         result["rates"].append({
@@ -465,7 +486,7 @@ TEXT:
     print(f"\nSAVED: {filename}")
 
 # ==============================
-# RUN PART 1
+# PART 1
 # ==============================
 
 print("\n============================")
@@ -483,7 +504,7 @@ print("\nWAITING 20 SECONDS...\n")
 time.sleep(20)
 
 # ==============================
-# RUN PART 2
+# PART 2
 # ==============================
 
 print("\n============================")
@@ -493,7 +514,25 @@ print("============================")
 process_banks(part2_banks, "part2.json")
 
 # ==============================
-# MERGE
+# WAIT
+# ==============================
+
+print("\nWAITING 20 SECONDS...\n")
+
+time.sleep(20)
+
+# ==============================
+# PART 3
+# ==============================
+
+print("\n============================")
+print("STARTING PART 3")
+print("============================")
+
+process_banks(part3_banks, "part3.json")
+
+# ==============================
+# LOAD PARTS
 # ==============================
 
 with open("part1.json", "r", encoding="utf-8") as f:
@@ -502,16 +541,27 @@ with open("part1.json", "r", encoding="utf-8") as f:
 with open("part2.json", "r", encoding="utf-8") as f:
     part2 = json.load(f)
 
+with open("part3.json", "r", encoding="utf-8") as f:
+    part3 = json.load(f)
+
+# ==============================
+# FINAL JSON
+# ==============================
+
 final_json = {
     "project_name": "ASOR TJ",
     "last_updated": "🔹" + datetime.now().strftime("%d.%m.%Y %H:%M"),
     "base_currency": "TJS",
     "status": "success",
-    "rates": part1["rates"] + part2["rates"]
+    "rates": (
+        part1["rates"] +
+        part2["rates"] +
+        part3["rates"]
+    )
 }
 
 # ==============================
-# SAVE FINAL JSON
+# SAVE FINAL
 # ==============================
 
 with open("data.json", "w", encoding="utf-8") as f:
@@ -519,7 +569,7 @@ with open("data.json", "w", encoding="utf-8") as f:
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
 # ==============================
-# FINAL PRINT
+# PRINT FINAL
 # ==============================
 
 print("\n============================")
