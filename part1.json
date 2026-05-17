@@ -3,23 +3,22 @@
     {
       "bank_name": "Бонки Миллии Тоҷикистон",
       "bank_id": "nbt",
-      "website": "https://nbt.tj/",
       "currencies": {
         "USD": {
           "buy": "9.3450",
-          "sell": "0.0000"
+          "sell": "9.3450"
         },
         "EUR": {
           "buy": "10.8757",
-          "sell": "0.0000"
+          "sell": "10.8757"
         },
         "RUB": {
           "buy": "0.1277",
-          "sell": "0.0000"
+          "sell": "0.1277"
         },
         "CNY": {
           "buy": "1.3724",
-          "sell": "0.0000"
+          "sell": "1.3724"
         },
         "KZT": {
           "buy": "0.0000",
@@ -30,7 +29,6 @@
     {
       "bank_name": "Амонатбонк",
       "bank_id": "amonatbonk",
-      "website": "https://amonatbonk.tj/",
       "currencies": {
         "USD": {
           "buy": "9.2700",
@@ -57,7 +55,6 @@
     {
       "bank_name": "Ориёнбонк",
       "bank_id": "oriyonbank",
-      "website": "https://oriyonbonk.tj/",
       "currencies": {
         "USD": {
           "buy": "9.3000",

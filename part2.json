@@ -2,20 +2,19 @@
   "rates": [
     {
       "bank_name": "Тавҳидбонк",
-      "bank_id": "tawhidbank",
-      "website": "https://www.tawhidbank.tj/",
+      "bank_id": "tawhid",
       "currencies": {
         "USD": {
-          "buy": "9.2600",
-          "sell": "9.3600"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "EUR": {
-          "buy": "10.7500",
-          "sell": "10.9500"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "RUB": {
-          "buy": "0.1250",
-          "sell": "0.1280"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "CNY": {
           "buy": "0.0000",
@@ -30,7 +29,6 @@
     {
       "bank_name": "Бонки Эсхата",
       "bank_id": "eskhata",
-      "website": "https://eskhata.com/",
       "currencies": {
         "USD": {
           "buy": "9.2600",
@@ -56,8 +54,7 @@
     },
     {
       "bank_name": "Коммерсбонк",
-      "bank_id": "cbt",
-      "website": "https://cbt.tj/",
+      "bank_id": "commerce",
       "currencies": {
         "USD": {
           "buy": "9.2500",

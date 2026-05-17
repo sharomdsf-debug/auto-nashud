@@ -1,29 +1,28 @@
 {
   "project_name": "ASOR TJ",
-  "last_updated": "🔹17.05.2026 12:55",
+  "last_updated": "🔹17.05.2026 13:25",
   "base_currency": "TJS",
   "status": "success",
   "rates": [
     {
       "bank_name": "Бонки Миллии Тоҷикистон",
       "bank_id": "nbt",
-      "website": "https://nbt.tj/",
       "currencies": {
         "USD": {
           "buy": "9.3450",
-          "sell": "0.0000"
+          "sell": "9.3450"
         },
         "EUR": {
           "buy": "10.8757",
-          "sell": "0.0000"
+          "sell": "10.8757"
         },
         "RUB": {
           "buy": "0.1277",
-          "sell": "0.0000"
+          "sell": "0.1277"
         },
         "CNY": {
           "buy": "1.3724",
-          "sell": "0.0000"
+          "sell": "1.3724"
         },
         "KZT": {
           "buy": "0.0000",
@@ -34,7 +33,6 @@
     {
       "bank_name": "Амонатбонк",
       "bank_id": "amonatbonk",
-      "website": "https://amonatbonk.tj/",
       "currencies": {
         "USD": {
           "buy": "9.2700",
@@ -61,7 +59,6 @@
     {
       "bank_name": "Ориёнбонк",
       "bank_id": "oriyonbank",
-      "website": "https://oriyonbonk.tj/",
       "currencies": {
         "USD": {
           "buy": "9.3000",
@@ -87,20 +84,19 @@
     },
     {
       "bank_name": "Тавҳидбонк",
-      "bank_id": "tawhidbank",
-      "website": "https://www.tawhidbank.tj/",
+      "bank_id": "tawhid",
       "currencies": {
         "USD": {
-          "buy": "9.2600",
-          "sell": "9.3600"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "EUR": {
-          "buy": "10.7500",
-          "sell": "10.9500"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "RUB": {
-          "buy": "0.1250",
-          "sell": "0.1280"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "CNY": {
           "buy": "0.0000",
@@ -115,7 +111,6 @@
     {
       "bank_name": "Бонки Эсхата",
       "bank_id": "eskhata",
-      "website": "https://eskhata.com/",
       "currencies": {
         "USD": {
           "buy": "9.2600",
@@ -141,8 +136,7 @@
     },
     {
       "bank_name": "Коммерсбонк",
-      "bank_id": "cbt",
-      "website": "https://cbt.tj/",
+      "bank_id": "commerce",
       "currencies": {
         "USD": {
           "buy": "9.2500",
@@ -168,8 +162,7 @@
     },
     {
       "bank_name": "Тиҷорат Бонк",
-      "bank_id": "tejaratbank",
-      "website": "https://tejaratbank.tj/",
+      "bank_id": "tijorat",
       "currencies": {
         "USD": {
           "buy": "9.3000",
@@ -180,8 +173,8 @@
           "sell": "11.2000"
         },
         "RUB": {
-          "buy": "0.0000",
-          "sell": "0.0000"
+          "buy": "0.1277",
+          "sell": "0.1277"
         },
         "CNY": {
           "buy": "0.0000",
@@ -195,8 +188,7 @@
     },
     {
       "bank_name": "Спитамен Бонк",
-      "bank_id": "spitamenbank",
-      "website": "https://spitamenbank.tj/",
+      "bank_id": "spitamen",
       "currencies": {
         "USD": {
           "buy": "9.2700",
@@ -211,8 +203,8 @@
           "sell": "0.1270"
         },
         "CNY": {
-          "buy": "0.0000",
-          "sell": "0.0000"
+          "buy": "1.3600",
+          "sell": "1.3800"
         },
         "KZT": {
           "buy": "0.0000",
@@ -223,7 +215,6 @@
     {
       "bank_name": "Имон Интернешнл Банк",
       "bank_id": "imon",
-      "website": "https://imon.tj/",
       "currencies": {
         "USD": {
           "buy": "0.0000",
@@ -249,8 +240,7 @@
     },
     {
       "bank_name": "Душанбе Сити",
-      "bank_id": "dc",
-      "website": "https://dc.tj/",
+      "bank_id": "dushanbe_city",
       "currencies": {
         "USD": {
           "buy": "9.3500",
@@ -277,7 +267,6 @@
     {
       "bank_name": "Алиф Бонк",
       "bank_id": "alif",
-      "website": "https://alif.tj/",
       "currencies": {
         "USD": {
           "buy": "9.3000",
@@ -304,19 +293,18 @@
     {
       "bank_name": "Саноатсодиротбонк",
       "bank_id": "ssb",
-      "website": "https://ssb.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2700",
-          "sell": "9.3700"
-        },
-        "EUR": {
           "buy": "10.7000",
           "sell": "11.0500"
         },
+        "EUR": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
         "RUB": {
-          "buy": "0.1266",
-          "sell": "0.1290"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "CNY": {
           "buy": "0.0000",
@@ -331,7 +319,6 @@
     {
       "bank_name": "IBT",
       "bank_id": "ibt",
-      "website": "https://ibt.tj/",
       "currencies": {
         "USD": {
           "buy": "9.2900",
@@ -358,7 +345,6 @@
     {
       "bank_name": "ICB",
       "bank_id": "icb",
-      "website": "https://icb.tj/",
       "currencies": {
         "USD": {
           "buy": "0.0000",
@@ -385,7 +371,6 @@
     {
       "bank_name": "Микрофинансбонк",
       "bank_id": "mfb",
-      "website": "https://mfb.tj/",
       "currencies": {
         "USD": {
           "buy": "0.0000",
@@ -411,8 +396,7 @@
     },
     {
       "bank_name": "Бонки рушди Тоҷикистон",
-      "bank_id": "brt",
-      "website": "https://brt.tj/",
+      "bank_id": "sdb",
       "currencies": {
         "USD": {
           "buy": "9.2800",
@@ -439,7 +423,6 @@
     {
       "bank_name": "Ҳумо",
       "bank_id": "humo",
-      "website": "https://humo.tj/",
       "currencies": {
         "USD": {
           "buy": "0.0000",
@@ -466,7 +449,6 @@
     {
       "bank_name": "Арванд",
       "bank_id": "arvand",
-      "website": "https://arvand.tj/",
       "currencies": {
         "USD": {
           "buy": "9.2800",
@@ -493,7 +475,6 @@
     {
       "bank_name": "FINCA",
       "bank_id": "finca",
-      "website": "https://finca.tj/",
       "currencies": {
         "USD": {
           "buy": "9.2900",
@@ -519,20 +500,19 @@
     },
     {
       "bank_name": "Фридом Бонк Тоҷикистон",
-      "bank_id": "freedombank",
-      "website": "https://freedombank.tj/",
+      "bank_id": "freedom",
       "currencies": {
         "USD": {
           "buy": "9.3450",
-          "sell": "0.0000"
+          "sell": "9.3450"
         },
         "EUR": {
           "buy": "10.8757",
-          "sell": "0.0000"
+          "sell": "10.8757"
         },
         "RUB": {
           "buy": "0.1277",
-          "sell": "0.0000"
+          "sell": "0.1277"
         },
         "CNY": {
           "buy": "0.0000",
@@ -540,14 +520,13 @@
         },
         "KZT": {
           "buy": "0.0197",
-          "sell": "0.0000"
+          "sell": "0.0197"
         }
       }
     },
     {
       "bank_name": "Васл Бонк",
-      "bank_id": "vaslbank",
-      "website": "https://vasl.tj/",
+      "bank_id": "vasl",
       "currencies": {
         "USD": {
           "buy": "9.2800",
@@ -573,35 +552,33 @@
     },
     {
       "bank_name": "Актив Бонк",
-      "bank_id": "aktivbank",
-      "website": "https://activbank.tj/",
+      "bank_id": "aktiv",
       "currencies": {
         "USD": {
-          "buy": "9.2800",
-          "sell": "9.3600"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "EUR": {
-          "buy": "10.8500",
-          "sell": "11.0700"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "RUB": {
-          "buy": "0.1266",
-          "sell": "0.1290"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "CNY": {
-          "buy": "1.3600",
-          "sell": "1.4000"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "KZT": {
-          "buy": "0.0193",
-          "sell": "0.0210"
+          "buy": "0.0000",
+          "sell": "0.0000"
         }
       }
     },
     {
       "bank_name": "Азизи-Молия",
-      "bank_id": "azizimoliya",
-      "website": "https://azizimoliya.tj/",
+      "bank_id": "azizi",
       "currencies": {
         "USD": {
           "buy": "9.3200",
@@ -628,19 +605,18 @@
     {
       "bank_name": "Матин",
       "bank_id": "matin",
-      "website": "https://matin.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2600",
-          "sell": "9.3600"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "EUR": {
-          "buy": "10.7000",
-          "sell": "10.9000"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "RUB": {
-          "buy": "0.1250",
-          "sell": "0.1270"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "CNY": {
           "buy": "0.0000",

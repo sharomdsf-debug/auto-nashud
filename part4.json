@@ -2,8 +2,7 @@
   "rates": [
     {
       "bank_name": "Душанбе Сити",
-      "bank_id": "dc",
-      "website": "https://dc.tj/",
+      "bank_id": "dushanbe_city",
       "currencies": {
         "USD": {
           "buy": "9.3500",
@@ -30,7 +29,6 @@
     {
       "bank_name": "Алиф Бонк",
       "bank_id": "alif",
-      "website": "https://alif.tj/",
       "currencies": {
         "USD": {
           "buy": "9.3000",
@@ -57,19 +55,18 @@
     {
       "bank_name": "Саноатсодиротбонк",
       "bank_id": "ssb",
-      "website": "https://ssb.tj/",
       "currencies": {
         "USD": {
-          "buy": "9.2700",
-          "sell": "9.3700"
-        },
-        "EUR": {
           "buy": "10.7000",
           "sell": "11.0500"
         },
+        "EUR": {
+          "buy": "0.0000",
+          "sell": "0.0000"
+        },
         "RUB": {
-          "buy": "0.1266",
-          "sell": "0.1290"
+          "buy": "0.0000",
+          "sell": "0.0000"
         },
         "CNY": {
           "buy": "0.0000",

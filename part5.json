@@ -3,7 +3,6 @@
     {
       "bank_name": "IBT",
       "bank_id": "ibt",
-      "website": "https://ibt.tj/",
       "currencies": {
         "USD": {
           "buy": "9.2900",
@@ -30,7 +29,6 @@
     {
       "bank_name": "ICB",
       "bank_id": "icb",
-      "website": "https://icb.tj/",
       "currencies": {
         "USD": {
           "buy": "0.0000",
@@ -57,7 +55,6 @@
     {
       "bank_name": "Микрофинансбонк",
       "bank_id": "mfb",
-      "website": "https://mfb.tj/",
       "currencies": {
         "USD": {
           "buy": "0.0000",

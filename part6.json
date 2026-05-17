@@ -2,8 +2,7 @@
   "rates": [
     {
       "bank_name": "Бонки рушди Тоҷикистон",
-      "bank_id": "brt",
-      "website": "https://brt.tj/",
+      "bank_id": "sdb",
       "currencies": {
         "USD": {
           "buy": "9.2800",
@@ -30,7 +29,6 @@
     {
       "bank_name": "Ҳумо",
       "bank_id": "humo",
-      "website": "https://humo.tj/",
       "currencies": {
         "USD": {
           "buy": "0.0000",
@@ -57,7 +55,6 @@
     {
       "bank_name": "Арванд",
       "bank_id": "arvand",
-      "website": "https://arvand.tj/",
       "currencies": {
         "USD": {
           "buy": "9.2800",
