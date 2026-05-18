@@ -1,8 +1,8 @@
 {
   "rates": [
     {
-      "bank_name": "Спитамен Бонк",
-      "bank_id": "spitamen",
+      "bank_name": "Азизи-Молия",
+      "bank_id": "azizi",
       "currencies": {
         "USD": {
           "buy": "0.0000",

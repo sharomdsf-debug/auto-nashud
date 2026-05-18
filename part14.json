@@ -1,8 +1,8 @@
 {
   "rates": [
     {
-      "bank_name": "Спитамен Бонк",
-      "bank_id": "spitamen",
+      "bank_name": "ICB",
+      "bank_id": "icb",
       "currencies": {
         "USD": {
           "buy": "0.0000",

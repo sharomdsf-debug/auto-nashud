@@ -1,60 +1,8 @@
 {
   "rates": [
     {
-      "bank_name": "IBT",
-      "bank_id": "ibt",
-      "currencies": {
-        "USD": {
-          "buy": "9.2900",
-          "sell": "9.3700"
-        },
-        "EUR": {
-          "buy": "10.7500",
-          "sell": "10.9700"
-        },
-        "RUB": {
-          "buy": "0.1245",
-          "sell": "0.1270"
-        },
-        "CNY": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        },
-        "KZT": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        }
-      }
-    },
-    {
-      "bank_name": "ICB",
-      "bank_id": "icb",
-      "currencies": {
-        "USD": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        },
-        "EUR": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        },
-        "RUB": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        },
-        "CNY": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        },
-        "KZT": {
-          "buy": "0.0000",
-          "sell": "0.0000"
-        }
-      }
-    },
-    {
-      "bank_name": "Микрофинансбонк",
-      "bank_id": "mfb",
+      "bank_name": "Бонки Эсхата",
+      "bank_id": "eskhata",
       "currencies": {
         "USD": {
           "buy": "0.0000",

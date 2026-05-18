@@ -1,8 +1,8 @@
 {
   "rates": [
     {
-      "bank_name": "Спитамен Бонк",
-      "bank_id": "spitamen",
+      "bank_name": "Ҳумо",
+      "bank_id": "humo",
       "currencies": {
         "USD": {
           "buy": "0.0000",

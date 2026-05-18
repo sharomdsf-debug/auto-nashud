@@ -1,8 +1,8 @@
 {
   "rates": [
     {
-      "bank_name": "Спитамен Бонк",
-      "bank_id": "spitamen",
+      "bank_name": "Алиф Бонк",
+      "bank_id": "alif",
       "currencies": {
         "USD": {
           "buy": "0.0000",
