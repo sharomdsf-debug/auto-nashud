@@ -54,10 +54,10 @@ ALL_BANKS = [
 ]
 
 # =========================================================
-# SPLIT
+# 24 PARTS (1 BANK = 1 PART)
 # =========================================================
 
-PARTS = [ALL_BANKS[i:i+3] for i in range(0, len(ALL_BANKS), 3)]
+PARTS = [[bank] for bank in ALL_BANKS]
 
 # =========================================================
 # VALIDATION
@@ -158,16 +158,16 @@ def scrape(url):
                 "url": url,
                 "formats": ["markdown"],
                 "onlyMainContent": False,
-                "waitFor": 15000
+                "waitFor": 25000
             },
-            timeout=180
+            timeout=240
         )
 
         data = response.json()
 
         markdown = data.get("data", {}).get("markdown", "")
 
-        print(f"MARKDOWN: {len(markdown)} chars")
+        print(f"MARKDOWN SIZE: {len(markdown)}")
 
         return markdown
 
@@ -184,13 +184,20 @@ def scrape(url):
 SECTION_PROMPT = """
 You are extracting ONLY the currency exchange section from a bank website.
 
+STRICT RULES:
+- Return ONLY raw text
+- DO NOT explain
+- DO NOT summarize
+- DO NOT output JSON
+- Ignore menus
+- Ignore contacts
+- Ignore cards
+- Ignore loans
+- Ignore percentages
+- Ignore news
+
 IMPORTANT:
-- Return ONLY raw text.
-- DO NOT summarize.
-- DO NOT explain.
-- DO NOT output JSON.
-- Find ONLY the part containing exchange rates.
-- Ignore menus, footer, contacts, news, loans, cards.
+Find ONLY currency exchange section.
 
 The section MUST contain:
 USD, EUR, RUB, CNY or KZT.
@@ -202,13 +209,13 @@ TEXT:
 
 def find_currency_section(markdown):
 
-    markdown = markdown[:40000]
+    markdown = markdown[:70000]
 
     for model in MODELS:
 
         print(f"\nSECTION MODEL: {model}")
 
-        for attempt in range(2):
+        for attempt in range(3):
 
             try:
 
@@ -227,9 +234,9 @@ def find_currency_section(markdown):
                             }
                         ],
                         "temperature": 0,
-                        "max_tokens": 1200
+                        "max_tokens": 1500
                     },
-                    timeout=180
+                    timeout=240
                 )
 
                 data = response.json()
@@ -240,14 +247,16 @@ def find_currency_section(markdown):
                 text = data["choices"][0]["message"]["content"]
 
                 if len(text) > 100:
+
                     print("SECTION FOUND")
+
                     return text
 
             except Exception as e:
 
                 print("SECTION ERROR:", e)
 
-            time.sleep(5)
+            time.sleep(8)
 
     return markdown[:2500]
 
@@ -259,15 +268,18 @@ JSON_PROMPT = """
 Extract REAL bank exchange rates against TJS.
 
 STRICT RULES:
-- Return ONLY JSON.
-- Never explain.
-- Never add markdown.
-- Use ONLY numbers from the text.
-- Never invent values.
-- Ignore phone numbers, years, loan rates, percentages.
+- Return ONLY JSON
+- Never explain
+- Never add markdown
+- Use ONLY numbers from the text
+- Never invent values
+- Ignore phone numbers
+- Ignore years
+- Ignore percentages
+- Ignore loan rates
 
 IMPORTANT:
-- Some banks may have only BUY and no SELL.
+- Some banks may have only BUY and no SELL
 - If sell missing -> "0.0000"
 - If currency missing -> "0.0000"
 
@@ -299,7 +311,7 @@ def extract_rates(text):
 
         print(f"\nEXTRACT MODEL: {model}")
 
-        for attempt in range(3):
+        for attempt in range(4):
 
             try:
 
@@ -318,9 +330,9 @@ def extract_rates(text):
                             }
                         ],
                         "temperature": 0,
-                        "max_tokens": 300
+                        "max_tokens": 400
                     },
-                    timeout=180
+                    timeout=240
                 )
 
                 data = response.json()
@@ -357,7 +369,7 @@ def extract_rates(text):
 
                 print("EXTRACT ERROR:", e)
 
-            time.sleep(5)
+            time.sleep(8)
 
     return best
 
@@ -367,9 +379,9 @@ def extract_rates(text):
 
 def process_bank(bank):
 
-    print("\n" + "=" * 60)
-    print(bank["name"])
-    print("=" * 60)
+    print("\n" + "=" * 70)
+    print(f"PROCESSING: {bank['name']}")
+    print("=" * 70)
 
     markdown = scrape(bank["website"])
 
@@ -411,7 +423,9 @@ def process_part(part, filename):
 
         result["rates"].append(item)
 
-        time.sleep(5)
+        print("\nWAITING 10 SECONDS...\n")
+
+        time.sleep(10)
 
     with open(filename, "w", encoding="utf-8") as f:
 
@@ -430,9 +444,9 @@ def process_part(part, filename):
 
 for index, part in enumerate(PARTS):
 
-    print("\n" + "#" * 70)
+    print("\n" + "#" * 80)
     print(f"PART {index+1}/{len(PARTS)}")
-    print("#" * 70)
+    print("#" * 80)
 
     process_part(
         part,
@@ -440,6 +454,9 @@ for index, part in enumerate(PARTS):
     )
 
     if index < len(PARTS) - 1:
+
+        print("\nWAITING 20 SECONDS BEFORE NEXT PART...\n")
+
         time.sleep(20)
 
 # =========================================================
@@ -450,17 +467,27 @@ all_rates = []
 
 for i in range(1, len(PARTS) + 1):
 
-    with open(f"part{i}.json", encoding="utf-8") as f:
+    filename = f"part{i}.json"
+
+    if not os.path.exists(filename):
+        continue
+
+    with open(filename, encoding="utf-8") as f:
 
         data = json.load(f)
 
         all_rates.extend(data["rates"])
 
+# =========================================================
+# FINAL JSON
+# =========================================================
+
 final = {
     "project_name": "ASOR TJ",
-    "last_updated": "🔹" + datetime.now().strftime("%d.%m.%Y %H:%M"),
+    "last_updated": "🔹 " + datetime.now().strftime("%d.%m.%Y %H:%M"),
     "base_currency": "TJS",
     "status": "success",
+    "total_banks": len(all_rates),
     "rates": all_rates
 }
 
@@ -473,5 +500,12 @@ with open("data.json", "w", encoding="utf-8") as f:
         indent=2
     )
 
-print("\nDONE")
+# =========================================================
+# DONE
+# =========================================================
+
+print("\n" + "=" * 80)
+print("DONE")
+print("=" * 80)
+
 print(json.dumps(final, ensure_ascii=False, indent=2))
